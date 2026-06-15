@@ -163,6 +163,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 }
 .block .title { font-weight: 600; font-size: 15px; }
 .block .tag { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.block.editing { border-color: var(--brass); box-shadow: 0 0 0 2px rgba(154, 123, 63, 0.18); }
 
 .pill {
   display: inline-block;
@@ -280,9 +281,19 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0
 .agenda-item .ameta { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .agenda-item .intention { font-size: 12px; color: var(--brass-deep); margin-top: 5px; font-style: italic; }
 .agenda-item .aacts { display: flex; align-items: center; gap: 5px; flex: none; }
-.agenda-item .aacts .grip { color: var(--brass-soft); font-size: 16px; cursor: grab; padding: 0 1px; touch-action: none; }
-.agenda-item .nudge { display: flex; flex-direction: column; gap: 3px; }
-.icon-btn.sm { width: 24px; height: 22px; font-size: 13px; border-radius: 7px; }
+.agenda-item .drag-handle {
+  flex: none;
+  display: flex; align-items: center; justify-content: center;
+  width: 26px;
+  margin: -12px 0 -12px -4px;
+  color: var(--brass-soft);
+  font-size: 18px;
+  letter-spacing: -2px;
+  cursor: grab;
+  touch-action: none;
+  border-radius: 8px 0 0 8px;
+}
+.agenda-item .drag-handle:active { cursor: grabbing; background: var(--surface-2); }
 .icon-btn.ok:hover { color: var(--sage); border-color: #b9c6ab; }
 
 .survival {

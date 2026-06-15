@@ -65,6 +65,17 @@ export function createTask(input: {
   return task;
 }
 
+export function updateTask(
+  taskId: string,
+  patch: Partial<Omit<StoredTask, "id" | "createdAt">>,
+): void {
+  const s = loadState();
+  const t = s.tasks.find((x) => x.id === taskId);
+  if (!t) return;
+  Object.assign(t, patch);
+  saveState(s);
+}
+
 export function deleteTask(taskId: string): void {
   const s = loadState();
   s.tasks = s.tasks.filter((t) => t.id !== taskId);
@@ -157,6 +168,23 @@ export function moveBlock(date: string, blockId: string, deltaMin: number): void
   block.locked = true;
   block.source = "USER";
   plan.status = "MODIFIED";
+  saveState(s);
+}
+
+/** Move a block so it begins at an absolute minute-of-day (used by drag-and-drop). */
+export function moveBlockTo(date: string, blockId: string, newStartMin: number): void {
+  const s = loadState();
+  const plan = s.dayPlans[date];
+  if (!plan) return;
+  const block = plan.blocks.find((b) => b.id === blockId);
+  if (!block) return;
+  const dur = block.endMin - block.startMin;
+  block.startMin = Math.max(0, Math.round(newStartMin));
+  block.endMin = block.startMin + dur;
+  block.locked = true;
+  block.source = "USER";
+  plan.status = "MODIFIED";
+  plan.blocks.sort((a, b) => a.startMin - b.startMin);
   saveState(s);
 }
 

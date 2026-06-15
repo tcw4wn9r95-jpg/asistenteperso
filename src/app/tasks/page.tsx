@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { createTask, deleteTask, listTasks } from "@/lib/engine";
+import { createTask, deleteTask, listTasks, updateTask } from "@/lib/engine";
 import { configureTask, hasApiKey } from "@/lib/ai";
 import type { StoredTask } from "@/lib/store";
 
@@ -20,9 +20,13 @@ function recurrenceFor(cadence: Cadence, byWeekday: number[]): StoredTask["recur
     default: return undefined;
   }
 }
+function cadenceOf(t: StoredTask): Cadence {
+  return (t.recurrence?.freq as Cadence) ?? "ONE_OFF";
+}
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<StoredTask[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [cadence, setCadence] = useState<Cadence>("ONE_OFF");
@@ -38,7 +42,32 @@ export default function TasksPage() {
   useEffect(refresh, []);
 
   function reset() {
+    setEditingId(null);
     setTitle(""); setDescription(""); setCadence("ONE_OFF"); setNote("");
+    setKind("CHORE"); setPriority(3); setTod("ANY"); setEnergy("MED");
+    setByWeekday([new Date().getDay() || 7]);
+  }
+
+  function startEdit(t: StoredTask) {
+    setEditingId(t.id);
+    setTitle(t.title);
+    setDescription(t.description ?? "");
+    setCadence(cadenceOf(t));
+    setByWeekday(t.recurrence?.byWeekday ?? [new Date().getDay() || 7]);
+    setKind(t.kind); setPriority(t.priority); setTod(t.preferredTimeOfDay); setEnergy(t.energy);
+    setNote("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function saveEdit() {
+    if (!editingId || !title.trim()) return;
+    updateTask(editingId, {
+      title: title.trim(),
+      description: description.trim() || undefined,
+      kind, priority, preferredTimeOfDay: tod, energy,
+      recurrence: recurrenceFor(cadence, byWeekday),
+    });
+    reset(); refresh();
   }
 
   function addManual() {
@@ -76,6 +105,7 @@ export default function TasksPage() {
   }
 
   function remove(taskId: string) {
+    if (editingId === taskId) reset();
     deleteTask(taskId);
     refresh();
   }
@@ -88,15 +118,20 @@ export default function TasksPage() {
       </header>
 
       <div className="card">
+        {editingId && <p className="eyebrow" style={{ marginBottom: 8 }}>Editing task</p>}
         <label>What needs doing?</label>
         <input value={title} placeholder="e.g. Vacuum the flat" onChange={(e) => setTitle(e.target.value)} />
 
-        <label>Describe it (optional) — Claudio will set it up for you</label>
-        <textarea
-          value={description}
-          placeholder="e.g. Run a load of laundry, hang to dry for about 90 min, then fold and put away. Weekly on Saturdays."
-          onChange={(e) => setDescription(e.target.value)}
-        />
+        {!editingId && (
+          <>
+            <label>Describe it (optional) — Claudio will set it up for you</label>
+            <textarea
+              value={description}
+              placeholder="e.g. Run a load of laundry, hang to dry for about 90 min, then fold and put away. Weekly on Saturdays."
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </>
+        )}
 
         <label>Cadence</label>
         <div className="row">
@@ -112,7 +147,7 @@ export default function TasksPage() {
               <button
                 key={d.n}
                 type="button"
-                className={`icon-btn ${byWeekday.includes(d.n) ? "" : ""}`}
+                className="icon-btn"
                 style={byWeekday.includes(d.n) ? { background: "var(--brass)", color: "#fbf6ea", borderColor: "var(--brass)" } : {}}
                 onClick={() => setByWeekday((w) => (w.includes(d.n) ? w.filter((x) => x !== d.n) : [...w, d.n]))}
               >
@@ -122,8 +157,8 @@ export default function TasksPage() {
           </div>
         )}
 
-        <details style={{ marginTop: 14 }}>
-          <summary className="muted small" style={{ cursor: "pointer" }}>Advanced (set manually)</summary>
+        <details style={{ marginTop: 14 }} open={!!editingId}>
+          <summary className="muted small" style={{ cursor: "pointer" }}>Details (type, priority, time, energy)</summary>
           <div className="row" style={{ marginTop: 8 }}>
             <div style={{ flex: 1 }}>
               <label>Type</label>
@@ -159,9 +194,19 @@ export default function TasksPage() {
         {note && <p className="small" style={{ marginTop: 10 }}>{note} {note.includes("Settings") && <Link href="/settings" style={{ color: "var(--brass-deep)", fontWeight: 600 }}>Open Settings →</Link>}</p>}
 
         <div className="row" style={{ marginTop: 14 }}>
-          <button className="btn brass" onClick={addWithClaudio} disabled={busy} type="button">✦ Let Claudio set it up</button>
-          <span className="spacer" />
-          <button className="btn secondary" onClick={addManual} disabled={busy} type="button">Add manually</button>
+          {editingId ? (
+            <>
+              <button className="btn ghost" onClick={reset} type="button">Cancel</button>
+              <span className="spacer" />
+              <button className="btn brass" onClick={saveEdit} type="button">Save changes</button>
+            </>
+          ) : (
+            <>
+              <button className="btn brass" onClick={addWithClaudio} disabled={busy} type="button">✦ Let Claudio set it up</button>
+              <span className="spacer" />
+              <button className="btn secondary" onClick={addManual} disabled={busy} type="button">Add manually</button>
+            </>
+          )}
         </div>
       </div>
 
@@ -169,7 +214,7 @@ export default function TasksPage() {
         <div className="empty">No tasks yet. Add one above — or describe it and let Claudio do the rest.</div>
       ) : (
         tasks.map((t) => (
-          <div key={t.id} className="block">
+          <div key={t.id} className={`block ${editingId === t.id ? "editing" : ""}`}>
             <div style={{ flex: 1 }}>
               <div className="title">{t.title}</div>
               <div className="tag">
@@ -179,7 +224,7 @@ export default function TasksPage() {
                 {t.segments.length ? ` · ${t.segments.length} steps` : ""}
               </div>
             </div>
-            <span className={`pill ${t.status === "DONE" ? "done" : ""}`}>{t.status.toLowerCase()}</span>
+            <button className="icon-btn" aria-label="Edit task" onClick={() => startEdit(t)}>✎</button>
             <button className="icon-btn" aria-label="Delete task" onClick={() => remove(t.id)}>✕</button>
           </div>
         ))

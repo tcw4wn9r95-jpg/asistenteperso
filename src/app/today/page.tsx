@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Timeline } from "@/components/Timeline";
-import { approveDay, buildDay, checkIn, moveBlock, readDay } from "@/lib/engine";
+import { approveDay, buildDay, checkIn, moveBlockTo, readDay } from "@/lib/engine";
 import type { StoredDayPlan } from "@/lib/store";
 
 function todayISO(): string {
@@ -35,8 +35,8 @@ export default function TodayPage() {
     approveDay(date);
     load(date);
   }
-  function onMove(blockId: string, deltaMin: number) {
-    moveBlock(date, blockId, deltaMin);
+  function onReorder(blockId: string, newStartMin: number) {
+    moveBlockTo(date, blockId, newStartMin);
     load(date);
   }
   function onCheckIn(blockId: string, outcome: "DONE" | "SKIPPED") {
@@ -86,14 +86,13 @@ export default function TodayPage() {
       ) : (
         <>
           <p className="muted small" style={{ marginTop: 0 }}>
-            Use <b>−/+</b> or drag the ⠿ handle to move a block (15-min steps). Moved blocks pin —
-            tap <b>Reflow day</b> to rearrange everything else around them.
+            Grab the <b>⠿</b> handle and drag a block to reorder your day. It reschedules to the new
+            slot and pins — tap <b>Reflow day</b> to rearrange everything else around it.
           </p>
           <Timeline
             blocks={blocks}
             approved={plan?.status === "APPROVED"}
-            onMove={onMove}
-            onNudge={onMove}
+            onReorder={onReorder}
             onCheckIn={onCheckIn}
           />
           {plan?.unscheduled.length ? (
