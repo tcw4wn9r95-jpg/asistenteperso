@@ -47,13 +47,16 @@ export default function TodayPage() {
 
   return (
     <>
-      <div className="topbar">
-        <div>
-          <h1>Your day</h1>
-          <div className="sub">{plan ? statusLabel(plan.status) : "No plan yet"}</div>
+      <header className="page-head">
+        <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-end" }}>
+          <div>
+            <p className="eyebrow">Your schedule</p>
+            <h1 className="display">Today</h1>
+          </div>
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ width: "auto" }} />
         </div>
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ width: "auto" }} />
-      </div>
+        <div className="sub">{plan ? statusLabel(plan.status) : "No plan yet"}</div>
+      </header>
 
       <div className="row" style={{ marginBottom: 12 }}>
         <button className="btn" onClick={build} disabled={busy}>

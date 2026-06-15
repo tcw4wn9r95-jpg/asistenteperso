@@ -16,6 +16,7 @@ export interface StoredSegment {
 export interface StoredTask {
   id: string;
   title: string;
+  description?: string;
   kind: "GENERIC" | "CHORE" | "STUDY";
   priority: number;
   estimatedMinutes: number;
@@ -80,6 +81,11 @@ export interface AvailabilityWindow {
   energy?: Energy;
 }
 
+export interface AppSettings {
+  anthropicKey?: string;
+  model?: string;
+}
+
 export interface AppState {
   timezone: string;
   weeklyAvailability: Record<string, AvailabilityWindow[]>;
@@ -87,7 +93,10 @@ export interface AppState {
   milestones: StoredMilestone[];
   dayPlans: Record<string, StoredDayPlan>;
   streaks: StoredStreak[];
+  settings: AppSettings;
 }
+
+export const DEFAULT_MODEL = "claude-sonnet-4-6";
 
 const KEY = "claudio-state-v1";
 
@@ -108,6 +117,7 @@ function defaultState(): AppState {
     milestones: [],
     dayPlans: {},
     streaks: [],
+    settings: {},
   };
 }
 
@@ -120,7 +130,8 @@ export function loadState(): AppState {
       saveState(seeded);
       return seeded;
     }
-    return JSON.parse(raw) as AppState;
+    // Merge over defaults so state saved by older versions stays valid.
+    return { ...defaultState(), ...(JSON.parse(raw) as AppState) };
   } catch {
     return defaultState();
   }

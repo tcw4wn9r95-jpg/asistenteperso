@@ -5,6 +5,7 @@
 
 import { DateTime } from "luxon";
 import {
+  AppSettings,
   AppState,
   StoredBlock,
   StoredDayPlan,
@@ -32,6 +33,7 @@ export function listTasks(): StoredTask[] {
 
 export function createTask(input: {
   title: string;
+  description?: string;
   kind: StoredTask["kind"];
   priority: number;
   estimatedMinutes?: number;
@@ -45,6 +47,7 @@ export function createTask(input: {
   const task: StoredTask = {
     id: id("task"),
     title: input.title,
+    description: input.description,
     kind: input.kind,
     priority: input.priority,
     estimatedMinutes: input.estimatedMinutes ?? suggestEstimateMinutes(input.title, input.kind),
@@ -60,6 +63,28 @@ export function createTask(input: {
   s.tasks.unshift(task);
   saveState(s);
   return task;
+}
+
+export function deleteTask(taskId: string): void {
+  const s = loadState();
+  s.tasks = s.tasks.filter((t) => t.id !== taskId);
+  // Drop any scheduled blocks that referenced the task.
+  for (const date of Object.keys(s.dayPlans)) {
+    s.dayPlans[date].blocks = s.dayPlans[date].blocks.filter((b) => b.taskId !== taskId);
+  }
+  saveState(s);
+}
+
+// ---------- Settings ----------
+
+export function getSettings(): AppSettings {
+  return loadState().settings ?? {};
+}
+
+export function saveSettings(settings: AppSettings): void {
+  const s = loadState();
+  s.settings = { ...s.settings, ...settings };
+  saveState(s);
 }
 
 // ---------- Day planning ----------

@@ -1,52 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { chat, hasApiKey } from "@/lib/ai";
 
-interface Msg {
-  role: "user" | "assistant";
-  text: string;
-}
-
-// In the static build there's no server, so Claudio's AI lives behind an external
-// endpoint (a small serverless function or an Action-backed proxy) that holds the
-// Claude key. Set NEXT_PUBLIC_CHAT_ENDPOINT to enable it.
-const ENDPOINT = process.env.NEXT_PUBLIC_CHAT_ENDPOINT || "";
+interface Msg { role: "user" | "assistant"; text: string }
+type History = Parameters<typeof chat>[0];
 
 export default function ChatPage() {
+  const [keyed, setKeyed] = useState(true);
   const [messages, setMessages] = useState<Msg[]>([
-    {
-      role: "assistant",
-      text: "Hi, I'm Claudio. I can help you reason about your day and plans. (Live chat needs the AI endpoint configured — your schedule, tasks, goals and streaks all work without it.)",
-    },
+    { role: "assistant", text: "Good day. I'm Claudio. Tell me what's on your plate and I'll arrange it — try \"build my day\", \"add a 20-minute call this afternoon\", or \"how are my streaks?\"." },
   ]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const history = useRef<History>([]);
+  const endRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setKeyed(hasApiKey()); }, []);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, busy]);
 
   async function send() {
     const text = input.trim();
     if (!text || busy) return;
     setMessages((m) => [...m, { role: "user", text }]);
     setInput("");
-
-    if (!ENDPOINT) {
-      setMessages((m) => [
-        ...m,
-        { role: "assistant", text: "Claudio's AI endpoint isn't configured yet (set NEXT_PUBLIC_CHAT_ENDPOINT). Everything else in the app works offline." },
-      ]);
+    if (!hasApiKey()) {
+      setMessages((m) => [...m, { role: "assistant", text: "I'm not yet connected. Add your Anthropic API key in Settings and I'll be right with you." }]);
       return;
     }
-
     setBusy(true);
     try {
-      const res = await fetch(ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
-      });
-      const data = await res.json();
-      setMessages((m) => [...m, { role: "assistant", text: data.reply ?? "(no reply)" }]);
-    } catch {
-      setMessages((m) => [...m, { role: "assistant", text: "Couldn't reach Claudio's AI endpoint." }]);
+      const res = await chat(history.current, text);
+      history.current = res.history;
+      setMessages((m) => [...m, { role: "assistant", text: res.reply }]);
+    } catch (e) {
+      setMessages((m) => [...m, { role: "assistant", text: `My apologies — ${e instanceof Error ? e.message : "something went wrong"}.` }]);
     } finally {
       setBusy(false);
     }
@@ -54,14 +43,17 @@ export default function ChatPage() {
 
   return (
     <>
-      <div className="topbar">
-        <h1>Claudio</h1>
-      </div>
+      <header className="page-head">
+        <p className="eyebrow">At your service</p>
+        <h1 className="display">Claudio</h1>
+      </header>
 
-      {!ENDPOINT && (
-        <div className="card" style={{ borderColor: "var(--warn)", fontSize: 13 }}>
-          ⚠️ AI chat is offline. Deterministic planning, drag, approve, tasks, goals and streaks
-          all work without it. Wire <b>NEXT_PUBLIC_CHAT_ENDPOINT</b> to a Claude-backed endpoint to enable chat.
+      {!keyed && (
+        <div className="card" style={{ borderColor: "var(--brass-soft)" }}>
+          <p className="small" style={{ margin: 0 }}>
+            ✦ Claudio needs your Anthropic API key to converse. <Link href="/settings" style={{ color: "var(--brass-deep)", fontWeight: 600 }}>Open Settings →</Link>
+            <br />Everything else — planning, drag, approve, tasks, goals, streaks — works without it.
+          </p>
         </div>
       )}
 
@@ -72,12 +64,13 @@ export default function ChatPage() {
             <div className="bubble">{m.text}</div>
           </div>
         ))}
-        {busy && <div className="muted">Claudio is thinking…</div>}
+        {busy && <div className="chat-msg assistant"><div className="who">Claudio</div><div className="bubble muted">Attending to it…</div></div>}
+        <div ref={endRef} />
       </div>
 
-      <div className="row">
+      <div className="chat-bar">
         <input value={input} placeholder="Message Claudio…" onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} style={{ flex: 1 }} />
-        <button className="btn" onClick={send} disabled={busy}>Send</button>
+        <button className="btn brass" onClick={send} disabled={busy}>Send</button>
       </div>
     </>
   );

@@ -13,12 +13,11 @@ export default function ProgressPage() {
 
   return (
     <>
-      <div className="topbar">
-        <h1>Streaks & accountability</h1>
-      </div>
-      <p className="muted" style={{ fontSize: 13 }}>
-        Consistency beats intensity. Each <b>✓</b> you log on Today keeps a streak alive.
-      </p>
+      <header className="page-head">
+        <p className="eyebrow">Accountability</p>
+        <h1 className="display">Streaks</h1>
+      </header>
+      <p className="muted small">Consistency beats intensity. Each <b>✓</b> you log on Today keeps a streak alive.</p>
       {streaks.length === 0 ? (
         <div className="empty">No streaks yet — check off something on Today to start one. 🔥</div>
       ) : (
@@ -29,7 +28,7 @@ export default function ProgressPage() {
               <div className="tag">last done {s.lastCompletedDate ?? "—"}</div>
             </div>
             <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 22, fontWeight: 700 }}>🔥 {s.current}</div>
+              <div className="streak-num">🔥 {s.current}</div>
               <div className="tag">best {s.longest}</div>
             </div>
           </div>

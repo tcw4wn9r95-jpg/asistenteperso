@@ -25,9 +25,10 @@ export default function MilestonesPage() {
 
   return (
     <>
-      <div className="topbar">
-        <h1>Milestones</h1>
-      </div>
+      <header className="page-head">
+        <p className="eyebrow">Working backwards from the date</p>
+        <h1 className="display">Milestones</h1>
+      </header>
 
       <div className="card">
         <label>Goal</label>
