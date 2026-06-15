@@ -1,12 +1,17 @@
-// Minimal service worker: enables installability + a network-first strategy
-// with an offline fallback to whatever is cached. Intentionally simple — the
-// app is dynamic (auth + API), so we don't aggressively cache data.
+// Minimal service worker: enables installability + a network-first strategy with
+// an offline fallback. Paths are derived from the registration scope so it works
+// under a GitHub Pages base path (e.g. /asistenteperso/) or at the root.
 
 const CACHE = "claudio-v1";
-const SHELL = ["/today", "/manifest.webmanifest", "/icon-192.png"];
+const SCOPE = new URL(self.registration.scope).pathname; // e.g. "/asistenteperso/" or "/"
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).catch(() => {}));
+  event.waitUntil(
+    caches
+      .open(CACHE)
+      .then((c) => c.addAll([`${SCOPE}today/`, `${SCOPE}manifest.webmanifest`, `${SCOPE}icon-192.png`]))
+      .catch(() => {}),
+  );
   self.skipWaiting();
 });
 
@@ -19,8 +24,9 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-  // Only handle GET navigations/assets; never cache API or auth calls.
-  if (request.method !== "GET" || new URL(request.url).pathname.startsWith("/api")) return;
+  if (request.method !== "GET") return;
+  // Never cache cross-origin integration reads (raw.githubusercontent etc.).
+  if (new URL(request.url).origin !== self.location.origin) return;
 
   event.respondWith(
     fetch(request)
@@ -29,6 +35,6 @@ self.addEventListener("fetch", (event) => {
         caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {});
         return res;
       })
-      .catch(() => caches.match(request).then((hit) => hit || caches.match("/today"))),
+      .catch(() => caches.match(request).then((hit) => hit || caches.match(`${SCOPE}today/`))),
   );
 });

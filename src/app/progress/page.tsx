@@ -1,22 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-interface Streak {
-  id: string;
-  key: string;
-  current: number;
-  longest: number;
-  lastCompletedDate: string | null;
-}
+import { listStreaks } from "@/lib/engine";
+import type { StoredStreak } from "@/lib/store";
 
 export default function ProgressPage() {
-  const [streaks, setStreaks] = useState<Streak[]>([]);
+  const [streaks, setStreaks] = useState<StoredStreak[]>([]);
 
   useEffect(() => {
-    fetch("/api/accountability/streaks")
-      .then((r) => r.json())
-      .then(setStreaks);
+    setStreaks(listStreaks());
   }, []);
 
   return (
@@ -25,14 +17,13 @@ export default function ProgressPage() {
         <h1>Streaks & accountability</h1>
       </div>
       <p className="muted" style={{ fontSize: 13 }}>
-        Consistency beats intensity. Each <b>Done</b> you log keeps a streak alive — and Claudio
-        uses these to nudge and rebalance your week.
+        Consistency beats intensity. Each <b>✓</b> you log on Today keeps a streak alive.
       </p>
       {streaks.length === 0 ? (
         <div className="empty">No streaks yet — check off something on Today to start one. 🔥</div>
       ) : (
         streaks.map((s) => (
-          <div key={s.id} className="block">
+          <div key={s.key} className="block">
             <div style={{ flex: 1 }}>
               <div className="title">{prettyKey(s.key)}</div>
               <div className="tag">last done {s.lastCompletedDate ?? "—"}</div>

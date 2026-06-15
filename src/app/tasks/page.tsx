@@ -1,51 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-interface Task {
-  id: string;
-  title: string;
-  kind: string;
-  priority: number;
-  estimatedMinutes: number;
-  estimateSource: string;
-  preferredTimeOfDay: string;
-  energy: string;
-  status: string;
-  recurrence?: { freq: string } | null;
-}
+import { createTask, listTasks } from "@/lib/engine";
+import type { StoredTask } from "@/lib/store";
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<StoredTask[]>([]);
   const [title, setTitle] = useState("");
-  const [kind, setKind] = useState("CHORE");
+  const [kind, setKind] = useState<StoredTask["kind"]>("CHORE");
   const [priority, setPriority] = useState(3);
-  const [tod, setTod] = useState("ANY");
-  const [energy, setEnergy] = useState("MED");
-  const [busy, setBusy] = useState(false);
+  const [tod, setTod] = useState<StoredTask["preferredTimeOfDay"]>("ANY");
+  const [energy, setEnergy] = useState<StoredTask["energy"]>("MED");
 
-  async function load() {
-    const res = await fetch("/api/tasks");
-    setTasks(await res.json());
-  }
   useEffect(() => {
-    load();
+    setTasks(listTasks());
   }, []);
 
-  async function add() {
+  function add() {
     if (!title.trim()) return;
-    setBusy(true);
-    try {
-      await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, kind, priority, preferredTimeOfDay: tod, energy }),
-      });
-      setTitle("");
-      await load();
-    } finally {
-      setBusy(false);
-    }
+    createTask({ title, kind, priority, preferredTimeOfDay: tod, energy });
+    setTitle("");
+    setTasks(listTasks());
   }
 
   return (
@@ -56,15 +31,11 @@ export default function TasksPage() {
 
       <div className="card">
         <label>What do you need to do?</label>
-        <input
-          value={title}
-          placeholder="e.g. Vacuum the flat"
-          onChange={(e) => setTitle(e.target.value)}
-        />
+        <input value={title} placeholder="e.g. Vacuum the flat" onChange={(e) => setTitle(e.target.value)} />
         <div className="row" style={{ marginTop: 8 }}>
           <div style={{ flex: 1 }}>
             <label>Type</label>
-            <select value={kind} onChange={(e) => setKind(e.target.value)}>
+            <select value={kind} onChange={(e) => setKind(e.target.value as StoredTask["kind"])}>
               <option value="CHORE">Chore</option>
               <option value="GENERIC">Task</option>
               <option value="STUDY">Study</option>
@@ -83,7 +54,7 @@ export default function TasksPage() {
         <div className="row">
           <div style={{ flex: 1 }}>
             <label>Best time</label>
-            <select value={tod} onChange={(e) => setTod(e.target.value)}>
+            <select value={tod} onChange={(e) => setTod(e.target.value as StoredTask["preferredTimeOfDay"])}>
               <option value="ANY">Any</option>
               <option value="MORNING">Morning</option>
               <option value="MIDDAY">Midday</option>
@@ -92,7 +63,7 @@ export default function TasksPage() {
           </div>
           <div style={{ flex: 1 }}>
             <label>Energy</label>
-            <select value={energy} onChange={(e) => setEnergy(e.target.value)}>
+            <select value={energy} onChange={(e) => setEnergy(e.target.value as StoredTask["energy"])}>
               <option value="LOW">Low</option>
               <option value="MED">Medium</option>
               <option value="HIGH">High</option>
@@ -100,11 +71,9 @@ export default function TasksPage() {
           </div>
         </div>
         <div className="row" style={{ marginTop: 10 }}>
-          <span className="muted" style={{ fontSize: 12 }}>
-            The app will suggest a time estimate automatically.
-          </span>
+          <span className="muted" style={{ fontSize: 12 }}>The app suggests a time estimate automatically.</span>
           <span className="spacer" />
-          <button className="btn" onClick={add} disabled={busy}>Add</button>
+          <button className="btn" onClick={add}>Add</button>
         </div>
       </div>
 

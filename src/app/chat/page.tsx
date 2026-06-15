@@ -1,25 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface Msg {
   role: "user" | "assistant";
   text: string;
 }
 
-export default function ChatPage() {
-  const [aiOn, setAiOn] = useState<boolean | null>(null);
-  useEffect(() => {
-    fetch("/api/health")
-      .then((r) => r.json())
-      .then((d) => setAiOn(d.aiConfigured))
-      .catch(() => setAiOn(false));
-  }, []);
+// In the static build there's no server, so Claudio's AI lives behind an external
+// endpoint (a small serverless function or an Action-backed proxy) that holds the
+// Claude key. Set NEXT_PUBLIC_CHAT_ENDPOINT to enable it.
+const ENDPOINT = process.env.NEXT_PUBLIC_CHAT_ENDPOINT || "";
 
+export default function ChatPage() {
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "assistant",
-      text: "Hi, I'm Claudio. Tell me what's on your plate and I'll fit it into your day. Try: \"build my day\" or \"add a 20-minute call to the afternoon\".",
+      text: "Hi, I'm Claudio. I can help you reason about your day and plans. (Live chat needs the AI endpoint configured — your schedule, tasks, goals and streaks all work without it.)",
     },
   ]);
   const [input, setInput] = useState("");
@@ -30,9 +27,18 @@ export default function ChatPage() {
     if (!text || busy) return;
     setMessages((m) => [...m, { role: "user", text }]);
     setInput("");
+
+    if (!ENDPOINT) {
+      setMessages((m) => [
+        ...m,
+        { role: "assistant", text: "Claudio's AI endpoint isn't configured yet (set NEXT_PUBLIC_CHAT_ENDPOINT). Everything else in the app works offline." },
+      ]);
+      return;
+    }
+
     setBusy(true);
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch(ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text }),
@@ -40,7 +46,7 @@ export default function ChatPage() {
       const data = await res.json();
       setMessages((m) => [...m, { role: "assistant", text: data.reply ?? "(no reply)" }]);
     } catch {
-      setMessages((m) => [...m, { role: "assistant", text: "Something went wrong reaching me." }]);
+      setMessages((m) => [...m, { role: "assistant", text: "Couldn't reach Claudio's AI endpoint." }]);
     } finally {
       setBusy(false);
     }
@@ -52,10 +58,10 @@ export default function ChatPage() {
         <h1>Claudio</h1>
       </div>
 
-      {aiOn === false && (
+      {!ENDPOINT && (
         <div className="card" style={{ borderColor: "var(--warn)", fontSize: 13 }}>
-          ⚠️ Claude is offline — set <b>ANTHROPIC_API_KEY</b> in <code>.env</code> and restart to
-          enable chat. Scheduling and tasks work without it.
+          ⚠️ AI chat is offline. Deterministic planning, drag, approve, tasks, goals and streaks
+          all work without it. Wire <b>NEXT_PUBLIC_CHAT_ENDPOINT</b> to a Claude-backed endpoint to enable chat.
         </div>
       )}
 
@@ -70,13 +76,7 @@ export default function ChatPage() {
       </div>
 
       <div className="row">
-        <input
-          value={input}
-          placeholder="Message Claudio…"
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && send()}
-          style={{ flex: 1 }}
-        />
+        <input value={input} placeholder="Message Claudio…" onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} style={{ flex: 1 }} />
         <button className="btn" onClick={send} disabled={busy}>Send</button>
       </div>
     </>

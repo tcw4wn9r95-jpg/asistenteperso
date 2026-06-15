@@ -6,10 +6,16 @@
 // CORS for the future in-browser build); override with INTEGRATION_BASE to point
 // at jsDelivr or a fork.
 
-const OWNER = process.env.INTEGRATION_OWNER || "tcw4wn9r95-jpg";
-const BRANCH = process.env.INTEGRATION_BRANCH || "main";
-const BASE =
-  process.env.INTEGRATION_BASE || `https://raw.githubusercontent.com/${OWNER}`;
+// Browser-safe env access (this module runs in the static client too).
+const env: Record<string, string | undefined> =
+  typeof process !== "undefined" && process.env ? process.env : {};
+
+const OWNER = env.INTEGRATION_OWNER || "tcw4wn9r95-jpg";
+const BRANCH = env.INTEGRATION_BRANCH || "main";
+// raw.githubusercontent serves these files with `Access-Control-Allow-Origin: *`,
+// so the same fetch works server-side and in the browser (the static PWA reads
+// these directly). Override with INTEGRATION_BASE if you fork the repos.
+const BASE = env.INTEGRATION_BASE || `https://raw.githubusercontent.com/${OWNER}`;
 
 export function repoFileUrl(repo: string, path: string): string {
   return `${BASE}/${repo}/${BRANCH}/${path}`;

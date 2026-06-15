@@ -1,14 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Timeline, TimelineBlock } from "@/components/Timeline";
-
-interface DayPlan {
-  dayPlanId: string;
-  date: string;
-  status: string;
-  blocks: TimelineBlock[];
-}
+import { Timeline } from "@/components/Timeline";
+import { approveDay, buildDay, checkIn, moveBlock, readDay } from "@/lib/engine";
+import type { StoredDayPlan } from "@/lib/store";
 
 function todayISO(): string {
   const d = new Date();
@@ -17,58 +12,35 @@ function todayISO(): string {
 
 export default function TodayPage() {
   const [date, setDate] = useState(todayISO());
-  const [plan, setPlan] = useState<DayPlan | null>(null);
+  const [plan, setPlan] = useState<StoredDayPlan | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const load = useCallback(async (d: string) => {
-    const res = await fetch(`/api/schedule/${d}`);
-    setPlan(await res.json());
-  }, []);
+  const load = useCallback((d: string) => setPlan(readDay(d)), []);
 
   useEffect(() => {
     load(date);
   }, [date, load]);
 
-  async function syncAndGenerate() {
+  async function build() {
     setBusy(true);
     try {
-      await Promise.all([
-        fetch(`/api/integrations/coach_claudio/sync?date=${date}`, { method: "POST" }),
-        fetch(`/api/integrations/nutriprep/sync?date=${date}`, { method: "POST" }),
-      ]);
-      const res = await fetch(`/api/schedule/${date}`, { method: "POST" });
-      setPlan(await res.json());
+      setPlan(await buildDay(date));
     } finally {
       setBusy(false);
     }
   }
 
-  async function approve() {
-    setBusy(true);
-    try {
-      await fetch(`/api/schedule/${date}/approve`, { method: "POST" });
-      await load(date);
-    } finally {
-      setBusy(false);
-    }
+  function approve() {
+    approveDay(date);
+    load(date);
   }
-
-  async function move(blockId: string, start: string, end: string) {
-    await fetch(`/api/schedule/${date}/blocks/${blockId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ start, end, locked: true }),
-    });
-    await load(date);
+  function onMove(blockId: string, deltaMin: number) {
+    moveBlock(date, blockId, deltaMin);
+    load(date);
   }
-
-  async function checkIn(blockId: string, outcome: "DONE" | "SKIPPED") {
-    await fetch(`/api/accountability/checkin`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scheduleBlockId: blockId, outcome, date }),
-    });
-    await load(date);
+  function onCheckIn(blockId: string, outcome: "DONE" | "SKIPPED") {
+    checkIn(date, blockId, outcome);
+    load(date);
   }
 
   const blocks = plan?.blocks ?? [];
@@ -78,24 +50,25 @@ export default function TodayPage() {
       <div className="topbar">
         <div>
           <h1>Your day</h1>
-          <div className="sub">{plan ? statusLabel(plan.status) : "Loading…"}</div>
+          <div className="sub">{plan ? statusLabel(plan.status) : "No plan yet"}</div>
         </div>
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ width: "auto" }} />
       </div>
 
       <div className="row" style={{ marginBottom: 12 }}>
-        <button className="btn" onClick={syncAndGenerate} disabled={busy}>
-          {blocks.length ? "Reflow day" : "Build my day"}
+        <button className="btn" onClick={build} disabled={busy}>
+          {busy ? "Building…" : blocks.length ? "Reflow day" : "Build my day"}
         </button>
-        <button className="btn secondary" onClick={approve} disabled={busy || !blocks.length}>
+        <button className="btn secondary" onClick={approve} disabled={!blocks.length}>
           Approve
         </button>
       </div>
 
       {blocks.length === 0 ? (
         <div className="card empty">
-          Nothing planned yet. Tap <b>Build my day</b> and Claudio will propose a schedule
-          from your chores, goals, training and meals — then drag blocks to rearrange and approve.
+          Nothing planned yet. Tap <b>Build my day</b> — Claudio pulls your training (Coach
+          Claudio) and meals (NutriPrep) plus your chores and goals, then proposes a schedule
+          you can drag to rearrange and approve.
         </div>
       ) : (
         <>
@@ -103,7 +76,15 @@ export default function TodayPage() {
             Drag the ⠿ handle to move a block (snaps to 15 min). Moved blocks pin in place —
             tap <b>Reflow day</b> to rearrange everything else around them.
           </p>
-          <Timeline blocks={blocks} onMove={move} onCheckIn={checkIn} />
+          <Timeline blocks={blocks} onMove={onMove} onCheckIn={onCheckIn} />
+          {plan?.unscheduled.length ? (
+            <div className="card" style={{ marginTop: 12 }}>
+              <strong>Didn’t fit ({plan.unscheduled.length})</strong>
+              <div className="muted" style={{ fontSize: 13 }}>
+                {plan.unscheduled.map((u) => u.title).join(", ")} — shorten something or bump to tomorrow.
+              </div>
+            </div>
+          ) : null}
         </>
       )}
     </>

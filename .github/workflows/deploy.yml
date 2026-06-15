@@ -1,0 +1,51 @@
+name: Deploy to GitHub Pages
+
+# Builds the static export and publishes it to GitHub Pages — same hosting model
+# as the Coach Claudio (training-ai) and NutriPrep apps.
+
+on:
+  push:
+    branches: [main, claude/personal-time-assistant-bczvfg]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; cancel in-progress runs of older commits.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build static export
+        # Project page is served under /<repo>, so set the base path accordingly.
+        env:
+          NEXT_PUBLIC_BASE_PATH: /asistenteperso
+        run: npm run build
+      - name: Disable Jekyll (serve _next/*)
+        run: touch out/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
