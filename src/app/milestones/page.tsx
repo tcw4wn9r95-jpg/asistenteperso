@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createMilestoneWithPlan, listMilestones } from "@/lib/engine";
-import type { StoredMilestone } from "@/lib/store";
+import { applyPlanSpecialization, createMilestoneWithPlan, deleteMilestone, getSettings, listMilestones } from "@/lib/engine";
+import { hasApiKey, specializePlan } from "@/lib/ai";
+import { DEFAULT_MODEL, type StoredMilestone } from "@/lib/store";
 
 export default function MilestonesPage() {
   const [items, setItems] = useState<StoredMilestone[]>([]);
@@ -10,16 +11,38 @@ export default function MilestonesPage() {
   const [domain, setDomain] = useState<StoredMilestone["domain"]>("LANGUAGE_EXAM");
   const [targetDate, setTargetDate] = useState("");
   const [hours, setHours] = useState(5);
+  const [context, setContext] = useState("");
+  const [note, setNote] = useState("");
 
   useEffect(() => {
     setItems(listMilestones());
   }, []);
 
-  function create() {
+  async function create() {
     if (!title.trim() || !targetDate) return;
-    createMilestoneWithPlan({ title, domain, targetDate, weeklyHoursBudget: hours, details: {} });
-    setTitle("");
-    setTargetDate("");
+    const m = createMilestoneWithPlan({
+      title, domain, targetDate, weeklyHoursBudget: hours,
+      details: context.trim() ? { context: context.trim() } : {},
+    });
+    setItems(listMilestones());
+
+    // Best-in-class, not generic: personalize the phase objectives with Claude.
+    if (hasApiKey()) {
+      setNote("Claudio is personalizing your plan…");
+      try {
+        const spec = await specializePlan({ ...m, details: context.trim() ? { context: context.trim() } : {} });
+        applyPlanSpecialization(m.id, spec.rationale, spec.phases, getSettings().model || DEFAULT_MODEL);
+        setNote("");
+      } catch {
+        setNote("Saved a solid expert plan (AI personalization unavailable just now).");
+      }
+      setItems(listMilestones());
+    }
+    setTitle(""); setTargetDate(""); setContext("");
+  }
+
+  function remove(id: string) {
+    deleteMilestone(id);
     setItems(listMilestones());
   }
 
@@ -48,22 +71,36 @@ export default function MilestonesPage() {
         </div>
         <label>Hours/week you can commit</label>
         <input type="number" min={1} value={hours} onChange={(e) => setHours(Number(e.target.value))} />
-        <div className="row" style={{ marginTop: 10 }}>
+
+        <label>Where you stand (optional) — Claudio tailors the plan to this</label>
+        <textarea
+          value={context}
+          placeholder="e.g. Currently around B1, weakest at listening and speaking; comfortable with grammar."
+          onChange={(e) => setContext(e.target.value)}
+        />
+
+        {note && <p className="small" style={{ marginTop: 10 }}>{note}</p>}
+        <div className="row" style={{ marginTop: 12 }}>
+          <span className="muted small">{hasApiKey() ? "Claudio will personalize the phases." : "Add an API key in Settings for AI-personalized plans."}</span>
           <span className="spacer" />
-          <button className="btn" onClick={create}>Create & build plan</button>
+          <button className="btn brass" onClick={create}>Create &amp; build plan</button>
         </div>
       </div>
 
       {items.map((m) => (
         <div key={m.id} className="card">
           <div className="row">
-            <strong>{m.title}</strong>
+            <strong className="card-title" style={{ margin: 0 }}>{m.title}</strong>
             <span className="spacer" />
             <span className="pill">by {new Date(m.targetDate).toLocaleDateString()}</span>
+            <button className="icon-btn" aria-label="Delete goal" onClick={() => remove(m.id)}>✕</button>
           </div>
           {m.plan ? (
             <>
-              <div className="muted" style={{ fontSize: 13, margin: "8px 0" }}>{m.plan.rationale}</div>
+              <div className="muted small" style={{ margin: "8px 0" }}>
+                {m.plan.generatedByModel && <span className="pill" style={{ marginRight: 6 }}>✦ personalized</span>}
+                {m.plan.rationale}
+              </div>
               {m.plan.phases.map((p) => (
                 <div key={p.order} className="block" style={{ display: "block" }}>
                   <div className="title">{p.order + 1}. {p.name}</div>

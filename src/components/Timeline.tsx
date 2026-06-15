@@ -11,35 +11,42 @@ export interface TimelineBlock {
   locked: boolean;
 }
 
-const PX_PER_MIN = 1.1;
+const PX_PER_MIN = 0.9; // drag sensitivity
 const SNAP_MIN = 15;
 
 function fmt(min: number): string {
-  const h = Math.floor(min / 60);
-  const m = Math.round(min % 60);
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  const m = ((min % 1440) + 1440) % 1440;
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(Math.round(m % 60)).padStart(2, "0")}`;
+}
+function dur(b: TimelineBlock): string {
+  const d = b.endMin - b.startMin;
+  return d >= 60 ? `${Math.floor(d / 60)}h${d % 60 ? ` ${d % 60}m` : ""}` : `${d}m`;
+}
+function kindLabel(kind: string): string {
+  switch (kind) {
+    case "PASSIVE_WAIT": return "Hands-free";
+    case "INTEGRATION": return "From your apps";
+    default: return "Focus";
+  }
 }
 
 export function Timeline({
   blocks,
+  approved,
   onMove,
+  onNudge,
   onCheckIn,
 }: {
   blocks: TimelineBlock[];
+  approved: boolean;
   onMove: (blockId: string, deltaMin: number) => void;
+  onNudge: (blockId: string, deltaMin: number) => void;
   onCheckIn: (blockId: string, outcome: "DONE" | "SKIPPED") => void;
 }) {
   const [drag, setDrag] = useState<{ id: string; deltaMin: number } | null>(null);
   const origin = useRef<{ y: number } | null>(null);
 
   if (blocks.length === 0) return null;
-
-  const dayStart = Math.floor((Math.min(...blocks.map((b) => b.startMin)) - 30) / 60) * 60;
-  const dayEnd = Math.ceil((Math.max(...blocks.map((b) => b.endMin)) + 30) / 60) * 60;
-  const height = (dayEnd - dayStart) * PX_PER_MIN;
-
-  const hourLines: number[] = [];
-  for (let m = dayStart; m <= dayEnd; m += 60) hourLines.push(m);
 
   function down(e: React.PointerEvent, b: TimelineBlock) {
     if (b.kind === "PASSIVE_WAIT") return;
@@ -59,42 +66,38 @@ export function Timeline({
   }
 
   return (
-    <div className="timeline" style={{ height }}>
-      {hourLines.map((m) => (
-        <div key={m} className="hourline" style={{ top: (m - dayStart) * PX_PER_MIN }}>
-          <span>{fmt(m)}</span>
-        </div>
-      ))}
-
+    <div className="agenda">
       {blocks.map((b) => {
         const isDrag = drag?.id === b.id;
         const delta = isDrag ? drag!.deltaMin : 0;
-        const top = (b.startMin - dayStart + delta) * PX_PER_MIN;
-        const blockHeight = Math.max(28, (b.endMin - b.startMin) * PX_PER_MIN - 4);
-        const movable = b.kind !== "PASSIVE_WAIT";
+        const passive = b.kind === "PASSIVE_WAIT";
+        const cls = passive ? "passive" : b.kind === "INTEGRATION" ? "integration" : "";
         return (
-          <div
-            key={b.id}
-            className={`tblock ${b.kind === "PASSIVE_WAIT" ? "passive" : ""} ${b.kind === "INTEGRATION" ? "integration" : ""} ${isDrag ? "dragging" : ""}`}
-            style={{ top, height: blockHeight }}
-          >
-            {movable && (
-              <span className="grip" onPointerDown={(e) => down(e, b)} onPointerMove={move} onPointerUp={() => up(b)} title="Drag to reschedule">
-                ⠿
-              </span>
-            )}
-            <div className="tbody">
-              <div className="ttitle">{b.title}</div>
-              <div className="ttime">
-                {fmt(b.startMin + delta)}–{fmt(b.endMin + delta)}
+          <div key={b.id} className={`agenda-item ${cls} ${isDrag ? "dragging" : ""}`}>
+            <div className="atime">
+              <span className="t1">{fmt(b.startMin + delta)}</span>
+              <span className="t2">{fmt(b.endMin + delta)}</span>
+            </div>
+            <div className="abody">
+              <div className="atitle">{b.title}</div>
+              <div className="ameta">
+                {kindLabel(b.kind)} · {dur(b)}
                 {b.locked ? " · pinned" : ""}
                 {isDrag && delta !== 0 ? `  (${delta > 0 ? "+" : ""}${delta}m)` : ""}
               </div>
+              {approved && !passive && (
+                <div className="intention">✦ I will {b.title.toLowerCase()} at {fmt(b.startMin + delta)}</div>
+              )}
             </div>
-            {movable && (
-              <div className="tactions">
-                <button className="btn ghost" onClick={() => onCheckIn(b.id, "DONE")}>✓</button>
-                <button className="btn ghost" onClick={() => onCheckIn(b.id, "SKIPPED")}>✗</button>
+            {!passive && (
+              <div className="aacts">
+                <span className="grip" onPointerDown={(e) => down(e, b)} onPointerMove={move} onPointerUp={() => up(b)} title="Drag to reschedule">⠿</span>
+                <div className="nudge">
+                  <button className="icon-btn sm" onClick={() => onNudge(b.id, -15)} aria-label="15 minutes earlier">−</button>
+                  <button className="icon-btn sm" onClick={() => onNudge(b.id, 15)} aria-label="15 minutes later">+</button>
+                </div>
+                <button className="icon-btn ok" onClick={() => onCheckIn(b.id, "DONE")} aria-label="Done">✓</button>
+                <button className="icon-btn" onClick={() => onCheckIn(b.id, "SKIPPED")} aria-label="Skip">✕</button>
               </div>
             )}
           </div>

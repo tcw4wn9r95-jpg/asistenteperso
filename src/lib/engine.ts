@@ -89,7 +89,7 @@ export function saveSettings(settings: AppSettings): void {
 
 // ---------- Day planning ----------
 
-export async function buildDay(date: string): Promise<StoredDayPlan> {
+export async function buildDay(date: string, opts: { survival?: boolean } = {}): Promise<StoredDayPlan> {
   const s = loadState();
   const weekday = DateTime.fromISO(date).weekday;
 
@@ -99,7 +99,16 @@ export async function buildDay(date: string): Promise<StoredDayPlan> {
   const fixed: FixedInterval[] = lockedBlocks.map((b) => ({ start: b.startMin, end: b.endMin }));
 
   const windows = buildFreeWindows(s.weeklyAvailability as WeeklyAvailability, weekday, fixed);
-  const candidates = await buildCandidates(s, date, lockedTaskIds as Set<string>);
+  let candidates = await buildCandidates(s, date, lockedTaskIds as Set<string>);
+  if (opts.survival) {
+    // Rough-night mode: only the must-dos — high-priority tasks and meals (you
+    // still need to eat). Training and lower-priority chores can slide.
+    candidates = candidates.filter((c) => {
+      const isMeal = /^(cook|batch)/i.test(c.title);
+      const isMustDoTask = c.priority <= 2 && c.kind !== "INTEGRATION_DERIVED";
+      return isMustDoTask || isMeal;
+    });
+  }
   const result = scheduleDay(candidates, windows);
 
   const autoBlocks: StoredBlock[] = result.blocks.map((b) => ({
@@ -258,6 +267,30 @@ function streakKey(s: AppState, block: StoredBlock): string {
 
 export function listMilestones(): StoredMilestone[] {
   return loadState().milestones;
+}
+
+/** Apply Claude-personalized objectives + rationale to a milestone's plan. */
+export function applyPlanSpecialization(
+  milestoneId: string,
+  rationale: string,
+  phases: { order: number; objectives: string[] }[],
+  model: string,
+): void {
+  const s = loadState();
+  const m = s.milestones.find((x) => x.id === milestoneId);
+  if (!m?.plan) return;
+  const byOrder = new Map(phases.map((p) => [p.order, p.objectives]));
+  m.plan.rationale = rationale;
+  m.plan.generatedByModel = model;
+  m.plan.phases = m.plan.phases.map((p) => ({ ...p, objectives: byOrder.get(p.order) ?? p.objectives }));
+  saveState(s);
+}
+
+export function deleteMilestone(milestoneId: string): void {
+  const s = loadState();
+  s.milestones = s.milestones.filter((m) => m.id !== milestoneId);
+  s.tasks = s.tasks.filter((t) => t.planMilestoneId !== milestoneId);
+  saveState(s);
 }
 
 /**

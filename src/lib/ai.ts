@@ -4,7 +4,7 @@
 // chatbot (tool-calling) and the "describe a task → configure it" feature.
 
 import { DateTime } from "luxon";
-import { DEFAULT_MODEL } from "./store";
+import { DEFAULT_MODEL, StoredMilestone } from "./store";
 import {
   buildDay,
   createTask,
@@ -15,6 +15,7 @@ import {
   listTasks,
   readDay,
 } from "./engine";
+import { getPlaybookForDomain } from "@/server/planning/playbooks";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 
@@ -165,6 +166,35 @@ export interface ConfiguredTask {
   estimatedMinutes: number;
   recurrence?: { freq: "DAILY" | "WEEKLY" | "MONTHLY"; byWeekday?: number[] };
   segments?: { type: "ACTIVE" | "PASSIVE"; label: string; minutes: number }[];
+}
+
+/**
+ * Personalize a milestone's plan with Claude — grounded by the expert playbook so
+ * the result is specialized, not a generic AI study plan. Returns a new rationale
+ * and per-phase objectives; the deterministic dates/order are never touched.
+ */
+export async function specializePlan(
+  milestone: StoredMilestone,
+): Promise<{ rationale: string; phases: { order: number; objectives: string[] }[] }> {
+  const playbook = getPlaybookForDomain(milestone.domain);
+  const phases = milestone.plan?.phases ?? [];
+  const ctx = JSON.stringify({
+    goal: milestone.title,
+    targetDate: milestone.targetDate,
+    weeklyHours: milestone.weeklyHoursBudget,
+    context: milestone.details,
+    phases: phases.map((p) => ({ order: p.order, name: p.name, focusAreas: p.focusAreas, start: p.startDate, end: p.endDate })),
+  });
+  const res = await callAnthropic({
+    max_tokens: 1200,
+    system:
+      (playbook?.groundingPrompt ?? "You are an expert coach.") +
+      ' Return ONLY JSON: {"rationale":string,"phases":[{"order":number,"objectives":string[]}]}. ' +
+      "Keep the same phase orders and dates; only write concrete, personalized objectives for the learner. No prose outside JSON.",
+    messages: [{ role: "user", content: `Specialize these phase objectives to the learner:\n${ctx}` }],
+  });
+  const text = textOf(res.content);
+  return JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
 }
 
 export async function configureTask(description: string): Promise<ConfiguredTask> {
