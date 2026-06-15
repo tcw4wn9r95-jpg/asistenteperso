@@ -5,6 +5,9 @@ import { authConfig } from "@/server/auth.config";
 export const { auth: middleware } = NextAuth(authConfig);
 
 export const config = {
-  // Protect everything except Next internals and static assets.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest).*)"],
+  // Protect everything except Next internals, the manifest, the service worker,
+  // and image assets (icons must be publicly fetchable for install-to-home-screen).
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|.*\\.png$).*)",
+  ],
 };
