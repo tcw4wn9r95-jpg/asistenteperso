@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Msg {
   role: "user" | "assistant";
@@ -8,6 +8,14 @@ interface Msg {
 }
 
 export default function ChatPage() {
+  const [aiOn, setAiOn] = useState<boolean | null>(null);
+  useEffect(() => {
+    fetch("/api/health")
+      .then((r) => r.json())
+      .then((d) => setAiOn(d.aiConfigured))
+      .catch(() => setAiOn(false));
+  }, []);
+
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "assistant",
@@ -43,6 +51,13 @@ export default function ChatPage() {
       <div className="topbar">
         <h1>Claudio</h1>
       </div>
+
+      {aiOn === false && (
+        <div className="card" style={{ borderColor: "var(--warn)", fontSize: 13 }}>
+          ⚠️ Claude is offline — set <b>ANTHROPIC_API_KEY</b> in <code>.env</code> and restart to
+          enable chat. Scheduling and tasks work without it.
+        </div>
+      )}
 
       <div style={{ marginBottom: 12 }}>
         {messages.map((m, i) => (

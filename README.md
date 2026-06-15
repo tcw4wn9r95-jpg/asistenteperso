@@ -40,19 +40,36 @@ Anthropic Claude · Luxon · Zod · Vitest.
 
 ```bash
 npm install
-cp .env.example .env        # SQLite works out of the box; add ANTHROPIC_API_KEY for AI
+cp .env.example .env        # set AUTH_SECRET (openssl rand -base64 32); add ANTHROPIC_API_KEY for AI
 npm run db:push             # create the dev database
 npm run db:seed             # seed your user, expert playbooks, and sample chores
-npm run dev                 # http://localhost:3000  (opens on /today)
+npm run dev                 # http://localhost:3000
 ```
 
-Tap **Build my day** on the Today screen to generate a proposal, then approve or reflow it.
+Then:
 
-### Without an API key
+1. Open `http://localhost:3000` → you're redirected to **/login**.
+2. Sign in with the seeded dev account: **dcasares.silva@gmail.com** / **claudio**.
+3. On **Today**, tap **Build my day** to generate a proposal.
+4. **Drag the ⠿ handle** on any block to move it (snaps to 15 min) — moved blocks pin in
+   place. Tap **Reflow day** to rearrange everything else around your pinned blocks, then
+   **Approve**. Use ✓ / ✗ on a block to log a check-in (builds streaks).
 
-The app runs fully. Milestone plans fall back to the deterministic playbook skeleton,
-and the Claudio chat replies with an "AI offline" notice. Add `ANTHROPIC_API_KEY` to
-`.env` to enable Claude personalization and the chatbot.
+> Auth is Auth.js (credentials). Every API route is gated by middleware; change the dev
+> password by editing `DEV_PASSWORD` in `prisma/seed.ts` and reseeding.
+
+### Enabling the Claudio chatbot (Claude)
+
+The app runs fully without AI. To switch it on:
+
+1. Put your key in `.env`: `ANTHROPIC_API_KEY="sk-ant-..."` (optionally set `CHAT_MODEL` /
+   `PLAN_MODEL`).
+2. Restart `npm run dev`.
+3. Open **Claudio** — the offline banner disappears (status comes from `GET /api/health`).
+   Try: *"build my day"*, *"add a 20-minute call this afternoon"*, *"how are my streaks?"*.
+
+Without a key, milestone plans fall back to the deterministic playbook skeleton and the
+chat replies with an "AI offline" notice.
 
 ## Scripts
 

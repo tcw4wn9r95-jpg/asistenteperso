@@ -1,13 +1,13 @@
-// Single-user app for now: resolve "the" user. Auth (Auth.js) is a deferred
-// step — every table already carries userId, so adding real sessions later is
-// additive. Until then we resolve the only seeded user.
+// Resolves the authenticated user from the Auth.js session. Routes are gated by
+// middleware, so a missing session here means a misconfiguration or a direct
+// unauthenticated call.
 
-import { prisma } from "@/server/db";
+import { auth } from "@/server/auth";
 
 export async function getCurrentUserId(): Promise<string> {
-  const user = await prisma.user.findFirst({ orderBy: { createdAt: "asc" } });
-  if (!user) {
-    throw new Error("No user found. Run `npm run db:seed`.");
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Unauthenticated");
   }
-  return user.id;
+  return session.user.id;
 }

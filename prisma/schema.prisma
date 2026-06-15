@@ -22,6 +22,7 @@ model User {
   id                 String   @id @default(cuid())
   email              String   @unique
   name               String?
+  passwordHash       String?
   timezone           String   @default("UTC")
   // jsonb: { wake: "07:00", sleep: "23:00" }
   dayBounds          Json

@@ -2,7 +2,11 @@
 // (including the canonical laundry chore with active/passive segments).
 
 import { PrismaClient, Prisma } from "@prisma/client";
+import bcrypt from "bcryptjs";
 import { allPlaybooks } from "../src/server/planning/playbooks";
+
+// Default dev password for the seeded account (change in production).
+const DEV_PASSWORD = "claudio";
 
 // Prisma's InputJsonValue rejects typed-interface arrays (no string index
 // signature). Our playbook structures are plain JSON, so cast through unknown.
@@ -49,12 +53,14 @@ async function main() {
     ],
   };
 
+  const passwordHash = await bcrypt.hash(DEV_PASSWORD, 10);
   const user = await prisma.user.upsert({
     where: { email: "dcasares.silva@gmail.com" },
-    update: { weeklyAvailability, dayBounds: { wake: "06:30", sleep: "23:00" } },
+    update: { weeklyAvailability, dayBounds: { wake: "06:30", sleep: "23:00" }, passwordHash },
     create: {
       email: "dcasares.silva@gmail.com",
       name: "You",
+      passwordHash,
       timezone: "Europe/Madrid",
       dayBounds: { wake: "06:30", sleep: "23:00" },
       weeklyAvailability,

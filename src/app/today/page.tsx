@@ -1,30 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Timeline, TimelineBlock } from "@/components/Timeline";
 
-interface Block {
-  id: string;
-  title: string;
-  start: string;
-  end: string;
-  kind: string;
-  locked: boolean;
-  source: string;
-}
 interface DayPlan {
   dayPlanId: string;
   date: string;
   status: string;
-  blocks: Block[];
+  blocks: TimelineBlock[];
 }
 
 function todayISO(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function fmt(iso: string): string {
-  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
 export default function TodayPage() {
@@ -44,7 +32,6 @@ export default function TodayPage() {
   async function syncAndGenerate() {
     setBusy(true);
     try {
-      // Pull today's training + food directives, then build the day.
       await Promise.all([
         fetch(`/api/integrations/coach_claudio/sync?date=${date}`, { method: "POST" }),
         fetch(`/api/integrations/nutriprep/sync?date=${date}`, { method: "POST" }),
@@ -66,6 +53,15 @@ export default function TodayPage() {
     }
   }
 
+  async function move(blockId: string, start: string, end: string) {
+    await fetch(`/api/schedule/${date}/blocks/${blockId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ start, end, locked: true }),
+    });
+    await load(date);
+  }
+
   async function checkIn(blockId: string, outcome: "DONE" | "SKIPPED") {
     await fetch(`/api/accountability/checkin`, {
       method: "POST",
@@ -84,12 +80,7 @@ export default function TodayPage() {
           <h1>Your day</h1>
           <div className="sub">{plan ? statusLabel(plan.status) : "Loading…"}</div>
         </div>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          style={{ width: "auto" }}
-        />
+        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ width: "auto" }} />
       </div>
 
       <div className="row" style={{ marginBottom: 12 }}>
@@ -104,28 +95,16 @@ export default function TodayPage() {
       {blocks.length === 0 ? (
         <div className="card empty">
           Nothing planned yet. Tap <b>Build my day</b> and Claudio will propose a schedule
-          from your chores, goals, training and meals — then you approve or rearrange it.
+          from your chores, goals, training and meals — then drag blocks to rearrange and approve.
         </div>
       ) : (
-        <div>
-          {blocks.map((b) => (
-            <div key={b.id} className={`block ${blockClass(b.kind)}`}>
-              <span className="time">
-                {fmt(b.start)}–{fmt(b.end)}
-              </span>
-              <div style={{ flex: 1 }}>
-                <div className="title">{b.title}</div>
-                <div className="tag">{kindLabel(b.kind)}{b.locked ? " · pinned" : ""}</div>
-              </div>
-              {b.kind !== "PASSIVE_WAIT" && (
-                <div className="row">
-                  <button className="btn ghost" onClick={() => checkIn(b.id, "DONE")}>Done</button>
-                  <button className="btn ghost" onClick={() => checkIn(b.id, "SKIPPED")}>Skip</button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        <>
+          <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>
+            Drag the ⠿ handle to move a block (snaps to 15 min). Moved blocks pin in place —
+            tap <b>Reflow day</b> to rearrange everything else around them.
+          </p>
+          <Timeline blocks={blocks} onMove={move} onCheckIn={checkIn} />
+        </>
       )}
     </>
   );
@@ -137,19 +116,5 @@ function statusLabel(s: string): string {
     case "APPROVED": return "Approved ✓";
     case "MODIFIED": return "Modified — re-approve when ready";
     default: return "No plan yet";
-  }
-}
-function blockClass(kind: string): string {
-  if (kind === "PASSIVE_WAIT") return "passive";
-  if (kind === "INTEGRATION") return "integration";
-  return "";
-}
-function kindLabel(kind: string): string {
-  switch (kind) {
-    case "PASSIVE_WAIT": return "Hands-free wait";
-    case "INTEGRATION": return "From your apps";
-    case "ACTIVE_WORK": return "Focus";
-    case "FIXED": return "Fixed";
-    default: return kind;
   }
 }
