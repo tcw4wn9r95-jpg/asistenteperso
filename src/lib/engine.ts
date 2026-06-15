@@ -264,21 +264,28 @@ export function checkIn(date: string, blockId: string, outcome: "DONE" | "SKIPPE
   const block = plan?.blocks.find((b) => b.id === blockId);
   if (!block) return;
 
-  const key = streakKey(s, block);
-  let streak = s.streaks.find((x) => x.key === key);
-  if (!streak) {
-    streak = { key, current: 0, longest: 0, lastCompletedDate: null };
-    s.streaks.push(streak);
+  // Toggle off if tapping the same outcome again.
+  const resolved = block.outcome === outcome ? undefined : outcome;
+  block.outcome = resolved;
+
+  // Only a fresh DONE advances a streak; a SKIP breaks it; toggling off leaves it.
+  if (resolved) {
+    const key = streakKey(s, block);
+    let streak = s.streaks.find((x) => x.key === key);
+    if (!streak) {
+      streak = { key, current: 0, longest: 0, lastCompletedDate: null };
+      s.streaks.push(streak);
+    }
+    if (resolved === "DONE") {
+      const yesterday = DateTime.fromISO(date).minus({ days: 1 }).toISODate();
+      const continues = streak.lastCompletedDate === yesterday || streak.lastCompletedDate === date;
+      if (streak.lastCompletedDate !== date) streak.current = continues ? streak.current + 1 : 1;
+      streak.lastCompletedDate = date;
+    } else {
+      streak.current = 0;
+    }
+    streak.longest = Math.max(streak.longest, streak.current);
   }
-  if (outcome === "DONE") {
-    const yesterday = DateTime.fromISO(date).minus({ days: 1 }).toISODate();
-    const continues = streak.lastCompletedDate === yesterday || streak.lastCompletedDate === date;
-    if (streak.lastCompletedDate !== date) streak.current = continues ? streak.current + 1 : 1;
-    streak.lastCompletedDate = date;
-  } else {
-    streak.current = 0;
-  }
-  streak.longest = Math.max(streak.longest, streak.current);
   saveState(s);
 }
 

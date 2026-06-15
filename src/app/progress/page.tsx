@@ -19,10 +19,14 @@ export default function ProgressPage() {
       </header>
       <p className="muted small">Consistency beats intensity. Each <b>✓</b> you log on Today keeps a streak alive.</p>
       {streaks.length === 0 ? (
-        <div className="empty">No streaks yet — check off something on Today to start one. 🔥</div>
+        <div className="empty hero" style={{ marginTop: 12 }}>
+          <div className="hero-mark">🔥</div>
+          <h2>No streaks yet</h2>
+          <p>Mark something done on Today and your first streak begins. Small, steady wins.</p>
+        </div>
       ) : (
         streaks.map((s) => (
-          <div key={s.key} className="block">
+          <div key={s.key} className="item-row">
             <div style={{ flex: 1 }}>
               <div className="title">{prettyKey(s.key)}</div>
               <div className="tag">last done {s.lastCompletedDate ?? "—"}</div>

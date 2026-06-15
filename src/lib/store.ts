@@ -41,6 +41,7 @@ export interface StoredBlock {
   kind: "ACTIVE_WORK" | "PASSIVE_WAIT" | "INTEGRATION" | "FIXED";
   locked: boolean;
   source: "AUTO" | "USER";
+  outcome?: "DONE" | "SKIPPED";
 }
 
 export interface StoredDayPlan {

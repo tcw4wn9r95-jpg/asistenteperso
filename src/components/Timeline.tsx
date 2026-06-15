@@ -5,10 +5,11 @@ import { useRef, useState } from "react";
 export interface TimelineBlock {
   id: string;
   title: string;
-  startMin: number; // minutes from local midnight
+  startMin: number;
   endMin: number;
   kind: string;
   locked: boolean;
+  outcome?: "DONE" | "SKIPPED";
 }
 
 function fmt(min: number): string {
@@ -17,135 +18,132 @@ function fmt(min: number): string {
 }
 function dur(b: TimelineBlock): string {
   const d = b.endMin - b.startMin;
-  return d >= 60 ? `${Math.floor(d / 60)}h${d % 60 ? ` ${d % 60}m` : ""}` : `${d}m`;
+  return d >= 60 ? `${Math.floor(d / 60)}h${d % 60 ? ` ${d % 60}` : ""}` : `${d} min`;
 }
 function kindLabel(kind: string): string {
-  switch (kind) {
-    case "PASSIVE_WAIT": return "Hands-free";
-    case "INTEGRATION": return "From your apps";
-    default: return "Focus";
-  }
+  if (kind === "PASSIVE_WAIT") return "hands-free";
+  if (kind === "INTEGRATION") return "from your apps";
+  return "focus";
 }
 
-interface Metric { id: string; top: number; height: number; center: number }
+interface Metric { id: string; center: number; height: number }
 
-export function Timeline({
+export function Agenda({
   blocks,
-  approved,
+  nowMin,
+  onComplete,
   onReorder,
-  onCheckIn,
+  onOpen,
 }: {
   blocks: TimelineBlock[];
-  approved: boolean;
-  // Reschedule the dragged block so it begins at `newStartMin`.
-  onReorder: (blockId: string, newStartMin: number) => void;
-  onCheckIn: (blockId: string, outcome: "DONE" | "SKIPPED") => void;
+  nowMin?: number;
+  onComplete: (id: string) => void;
+  onReorder: (id: string, newStartMin: number) => void;
+  onOpen: (block: TimelineBlock) => void;
 }) {
   const [drag, setDrag] = useState<{ id: string; dy: number; target: number } | null>(null);
-  const els = useRef(new Map<string, HTMLDivElement>());
+  const els = useRef(new Map<string, HTMLLIElement>());
   const metrics = useRef<Metric[]>([]);
   const startY = useRef(0);
 
   if (blocks.length === 0) return null;
-  const order = blocks; // already sorted by start
+  const order = blocks;
+
+  // Focus block: the one happening now, else the next not-yet-done item.
+  let focusId: string | null = null;
+  if (nowMin != null) {
+    const current = order.find((b) => b.startMin <= nowMin && nowMin < b.endMin && !b.outcome);
+    focusId = (current ?? order.find((b) => b.startMin >= nowMin && !b.outcome))?.id ?? null;
+  }
 
   function measure() {
     metrics.current = order.map((b) => {
-      const el = els.current.get(b.id)!;
-      const r = el.getBoundingClientRect();
-      return { id: b.id, top: r.top, height: r.height, center: r.top + r.height / 2 };
+      const r = els.current.get(b.id)!.getBoundingClientRect();
+      return { id: b.id, center: r.top + r.height / 2, height: r.height };
     });
   }
-
   function down(e: React.PointerEvent, b: TimelineBlock) {
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     measure();
     startY.current = e.clientY;
     setDrag({ id: b.id, dy: 0, target: order.findIndex((x) => x.id === b.id) });
   }
-
   function move(e: React.PointerEvent) {
     if (!drag) return;
     const dy = e.clientY - startY.current;
-    const fromIdx = order.findIndex((x) => x.id === drag.id);
-    const projectedCenter = metrics.current[fromIdx].center + dy;
-    // Target index = how many *other* items sit above the projected center.
+    const from = order.findIndex((x) => x.id === drag.id);
+    const projected = metrics.current[from].center + dy;
     let target = 0;
-    metrics.current.forEach((m, i) => {
-      if (i !== fromIdx && m.center < projectedCenter) target++;
-    });
+    metrics.current.forEach((m, i) => { if (i !== from && m.center < projected) target++; });
     if (dy !== drag.dy || target !== drag.target) setDrag({ id: drag.id, dy, target });
   }
-
   function up() {
     if (!drag) return;
-    const fromIdx = order.findIndex((x) => x.id === drag.id);
-    if (drag.target !== fromIdx) {
-      // Build the final order and place the block right after its new predecessor.
+    const from = order.findIndex((x) => x.id === drag.id);
+    if (drag.target !== from) {
       const ids = order.map((b) => b.id).filter((id) => id !== drag.id);
       ids.splice(drag.target, 0, drag.id);
       const pos = ids.indexOf(drag.id);
       const prev = pos > 0 ? blocks.find((b) => b.id === ids[pos - 1])! : null;
-      const newStart = prev ? prev.endMin : Math.min(...blocks.map((b) => b.startMin));
-      onReorder(drag.id, newStart);
+      onReorder(drag.id, prev ? prev.endMin : Math.min(...blocks.map((b) => b.startMin)));
     }
     setDrag(null);
   }
-
-  // Compute the live vertical shift for each item while dragging.
-  function shiftFor(index: number): number {
+  function shiftFor(i: number): number {
     if (!drag) return 0;
-    const fromIdx = order.findIndex((x) => x.id === drag.id);
-    if (index === fromIdx) return drag.dy;
-    const h = metrics.current[fromIdx]?.height ?? 0;
-    const gap = 10;
-    if (drag.target > fromIdx && index > fromIdx && index <= drag.target) return -(h + gap);
-    if (drag.target < fromIdx && index >= drag.target && index < fromIdx) return h + gap;
+    const from = order.findIndex((x) => x.id === drag.id);
+    if (i === from) return drag.dy;
+    const h = (metrics.current[from]?.height ?? 0) + 8;
+    if (drag.target > from && i > from && i <= drag.target) return -h;
+    if (drag.target < from && i >= drag.target && i < from) return h;
     return 0;
   }
 
   return (
-    <div className="agenda">
+    <ul className="agenda">
       {order.map((b, i) => {
         const passive = b.kind === "PASSIVE_WAIT";
-        const cls = passive ? "passive" : b.kind === "INTEGRATION" ? "integration" : "";
+        const done = b.outcome === "DONE";
+        const skipped = b.outcome === "SKIPPED";
+        const isFocus = b.id === focusId;
+        const current = nowMin != null && b.startMin <= nowMin && nowMin < b.endMin;
         const dragging = drag?.id === b.id;
+        const classes = [
+          "trow",
+          passive ? "passive" : "",
+          done ? "done" : "",
+          skipped ? "skipped" : "",
+          isFocus ? "focus" : "",
+          b.kind === "INTEGRATION" ? "integration" : "",
+          dragging ? "dragging" : "",
+        ].filter(Boolean).join(" ");
         return (
-          <div
+          <li
             key={b.id}
             ref={(el) => { if (el) els.current.set(b.id, el); else els.current.delete(b.id); }}
-            className={`agenda-item ${cls} ${dragging ? "dragging" : ""}`}
-            style={{ transform: `translateY(${shiftFor(i)}px)`, transition: drag && !dragging ? "transform 0.16s ease" : "none", zIndex: dragging ? 5 : 1 }}
+            className={classes}
+            style={{ transform: `translateY(${shiftFor(i)}px)`, transition: drag && !dragging ? "transform .16s ease" : "none", zIndex: dragging ? 5 : 1 }}
           >
-            <div
-              className="drag-handle"
-              onPointerDown={(e) => down(e, b)}
-              onPointerMove={move}
-              onPointerUp={up}
-              title="Drag to reschedule"
-            >⠿</div>
-            <div className="atime">
-              <span className="t1">{fmt(b.startMin)}</span>
-              <span className="t2">{fmt(b.endMin)}</span>
-            </div>
-            <div className="abody">
-              <div className="atitle">{b.title}</div>
-              <div className="ameta">
-                {kindLabel(b.kind)} · {dur(b)}{b.locked ? " · pinned" : ""}
-              </div>
-              {approved && !passive && (
-                <div className="intention">✦ I will {b.title.toLowerCase()} at {fmt(b.startMin)}</div>
-              )}
-            </div>
-            {!passive && (
-              <div className="aacts">
-                <button className="icon-btn ok" onClick={() => onCheckIn(b.id, "DONE")} aria-label="Done">✓</button>
-                <button className="icon-btn" onClick={() => onCheckIn(b.id, "SKIPPED")} aria-label="Skip">✕</button>
-              </div>
+            {passive ? (
+              <span className="check ghost" aria-hidden>⏳</span>
+            ) : (
+              <button className="check" aria-label={done ? "Mark not done" : "Mark done"} aria-pressed={done} onClick={() => onComplete(b.id)}>
+                {done ? "✓" : ""}
+              </button>
             )}
-          </div>
+
+            <button className="trow-main" onClick={() => onOpen(b)}>
+              {isFocus && <span className="now-chip">{current ? "Now" : "Up next"}</span>}
+              <span className="trow-title">{b.title}</span>
+              <span className="trow-sub">{fmt(b.startMin)}–{fmt(b.endMin)} · {kindLabel(b.kind)} · {dur(b)}{skipped ? " · skipped" : ""}{b.locked ? " · pinned" : ""}</span>
+            </button>
+
+            {!passive && (
+              <span className="reorder" onPointerDown={(e) => down(e, b)} onPointerMove={move} onPointerUp={up} title="Drag to reschedule" aria-label="Drag to reschedule">⠿</span>
+            )}
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }

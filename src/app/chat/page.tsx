@@ -68,9 +68,9 @@ export default function ChatPage() {
         <div ref={endRef} />
       </div>
 
-      <div className="chat-bar">
+      <div className="chat-dock">
         <input value={input} placeholder="Message Claudio…" onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} style={{ flex: 1 }} />
-        <button className="btn brass" onClick={send} disabled={busy}>Send</button>
+        <button className="btn primary" onClick={send} disabled={busy}>Send</button>
       </div>
     </>
   );
