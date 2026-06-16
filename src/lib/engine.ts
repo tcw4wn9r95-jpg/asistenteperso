@@ -92,6 +92,28 @@ export function getSettings(): AppSettings {
   return loadState().settings ?? {};
 }
 
+export interface DayWindow { start: string; end: string }
+
+/** Current availability, grouped as weekday (Mon) + weekend (Sat) representatives. */
+export function getAvailabilityGroups(): { weekday: DayWindow[]; weekend: DayWindow[] } {
+  const a = loadState().weeklyAvailability;
+  const pick = (k: string) => (a[k] ?? []).map((w) => ({ start: w.start, end: w.end }));
+  return { weekday: pick("1"), weekend: pick("6") };
+}
+
+/** Save availability: weekday windows apply Mon–Fri, weekend windows Sat–Sun. */
+export function saveAvailabilityGroups(weekday: DayWindow[], weekend: DayWindow[]): void {
+  const s = loadState();
+  const clean = (ws: DayWindow[]) =>
+    ws.filter((w) => w.start && w.end && w.end > w.start)
+      .sort((a, b) => a.start.localeCompare(b.start))
+      .map((w) => ({ start: w.start, end: w.end, energy: "MED" as const }));
+  const wd = clean(weekday);
+  const we = clean(weekend);
+  s.weeklyAvailability = { "1": wd, "2": wd, "3": wd, "4": wd, "5": wd, "6": we, "7": we };
+  saveState(s);
+}
+
 export function saveSettings(settings: AppSettings): void {
   const s = loadState();
   s.settings = { ...s.settings, ...settings };

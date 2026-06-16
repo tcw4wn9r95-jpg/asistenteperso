@@ -102,14 +102,15 @@ export const DEFAULT_MODEL = "claude-sonnet-4-6";
 const KEY = "claudio-state-v1";
 
 function defaultState(): AppState {
+  // Sensible, editable defaults (Settings → Your available hours). A continuous
+  // daytime window so tasks land at reasonable times out of the box.
   const weekday: AvailabilityWindow[] = [
-    { start: "06:30", end: "08:30", energy: "HIGH" },
-    { start: "13:00", end: "15:00", energy: "MED" },
-    { start: "20:30", end: "22:00", energy: "LOW" },
+    { start: "08:00", end: "12:00", energy: "HIGH" },
+    { start: "13:00", end: "21:00", energy: "MED" },
   ];
   const weekend: AvailabilityWindow[] = [
-    { start: "08:00", end: "12:00", energy: "MED" },
-    { start: "14:00", end: "18:00", energy: "MED" },
+    { start: "09:00", end: "13:00", energy: "HIGH" },
+    { start: "14:00", end: "20:00", energy: "MED" },
   ];
   return {
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
