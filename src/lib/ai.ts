@@ -167,6 +167,8 @@ export interface ConfiguredTask {
   estimatedMinutes: number;
   recurrence?: { freq: "DAILY" | "WEEKLY" | "MONTHLY"; byWeekday?: number[] };
   segments?: { type: "ACTIVE" | "PASSIVE"; label: string; minutes: number }[];
+  /** For a one-off follow-up, how many days after today it is due (1 = tomorrow). */
+  dueInDays?: number;
 }
 
 /**
@@ -206,20 +208,31 @@ export async function generateTailoredPlan(input: {
   return parsed;
 }
 
-export async function configureTask(description: string): Promise<ConfiguredTask> {
+/**
+ * Configure ONE OR MORE tasks from a free-text description. Same-day multi-stage
+ * work with waiting time becomes segments of a single task; a follow-up step on a
+ * LATER day becomes a separate task. Driven entirely by what the user wrote.
+ */
+export async function configureTasks(description: string): Promise<ConfiguredTask[]> {
+  const now = DateTime.now();
   const res = await callAnthropic({
-    max_tokens: 700,
+    max_tokens: 1100,
     system:
-      "You configure a single scheduling task from the user's description. Return ONLY a JSON object: " +
-      '{"title":string,"kind":"GENERIC"|"CHORE"|"STUDY","priority":1-4,"preferredTimeOfDay":"MORNING"|"MIDDAY"|"EVENING"|"ANY","energy":"LOW"|"MED"|"HIGH","estimatedMinutes":number,"recurrence":{"freq":"DAILY"|"WEEKLY"|"MONTHLY","byWeekday":[1-7]}|null,"segments":[{"type":"ACTIVE"|"PASSIVE","label":string,"minutes":number}]|null}. ' +
-      "Model multi-stage tasks with passive waits as segments (e.g. laundry: ACTIVE load, PASSIVE drying, ACTIVE fold). Keep it realistic. No prose.",
+      "You configure one or more scheduling tasks from the user's description. " +
+      `Today is ${now.toISODate()} (${now.toFormat("cccc")}). Weekdays are 1=Mon..7=Sun. ` +
+      'Return ONLY JSON: {"tasks":[{"title":string,"kind":"GENERIC"|"CHORE"|"STUDY","priority":1-4,"preferredTimeOfDay":"MORNING"|"MIDDAY"|"EVENING"|"ANY","energy":"LOW"|"MED"|"HIGH","estimatedMinutes":number,"recurrence":{"freq":"DAILY"|"WEEKLY"|"MONTHLY","byWeekday":[1-7]}|null,"segments":[{"type":"ACTIVE"|"PASSIVE","label":string,"minutes":number}]|null,"dueInDays":number|null}]}. ' +
+      "Rules: (1) Multi-stage work with waiting on the SAME day (e.g. laundry: load → drying wait → fold shortly after) is ONE task with segments. " +
+      "(2) If the user wants a follow-up step on a LATER day (e.g. 'fold the next day'), make it a SEPARATE task: if the main task recurs weekly on a weekday, the follow-up recurs weekly on the following weekday; if the main task is one-off, set the follow-up's dueInDays to the offset (1 = tomorrow). " +
+      "Only create the tasks the description implies. No prose outside the JSON.",
     messages: [{ role: "user", content: description }],
   });
   const text = textOf(res.content);
-  const json = text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1);
-  const parsed = JSON.parse(json) as ConfiguredTask;
-  // Coerce/guard the essentials.
-  parsed.priority = Math.min(4, Math.max(1, Number(parsed.priority) || 3));
-  parsed.estimatedMinutes = Math.max(5, Number(parsed.estimatedMinutes) || 30);
-  return parsed;
+  const json = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as { tasks?: ConfiguredTask[] };
+  const tasks = Array.isArray(json.tasks) ? json.tasks : [];
+  if (tasks.length === 0) throw new Error("No tasks returned");
+  return tasks.map((t) => ({
+    ...t,
+    priority: Math.min(4, Math.max(1, Number(t.priority) || 3)),
+    estimatedMinutes: Math.max(5, Number(t.estimatedMinutes) || 30),
+  }));
 }

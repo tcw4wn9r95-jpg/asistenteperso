@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Sheet } from "@/components/Sheet";
 import { createTask, deleteTask, listTasks, updateTask } from "@/lib/engine";
-import { configureTask, hasApiKey } from "@/lib/ai";
+import { configureTasks, hasApiKey } from "@/lib/ai";
 import type { StoredTask } from "@/lib/store";
 
 type Cadence = "ONE_OFF" | "DAILY" | "WEEKLY" | "MONTHLY";
@@ -60,18 +60,22 @@ export default function TasksPage() {
   }
 
   async function withClaudio() {
-    const text = description.trim() || title.trim();
+    const text = [title.trim(), description.trim()].filter(Boolean).join(". ");
     if (!text) return;
     if (!hasApiKey()) { setNote("Add your Anthropic key in Settings first."); return; }
     setBusy(true); setNote("Claudio is configuring this…");
     try {
-      const c = await configureTask(text);
-      createTask({
-        title: c.title || text.slice(0, 40), description: description.trim() || undefined,
-        kind: c.kind, priority: c.priority, preferredTimeOfDay: c.preferredTimeOfDay, energy: c.energy, estimatedMinutes: c.estimatedMinutes,
-        segments: c.segments?.map((s) => ({ ...s, requiresUserPresence: s.type !== "PASSIVE" })),
-        recurrence: c.recurrence ? { freq: c.recurrence.freq, interval: 1, byWeekday: c.recurrence.byWeekday } : undefined,
-      });
+      const configured = await configureTasks(text);
+      for (const c of configured) {
+        createTask({
+          title: c.title || text.slice(0, 40),
+          description: description.trim() || undefined,
+          kind: c.kind, priority: c.priority, preferredTimeOfDay: c.preferredTimeOfDay, energy: c.energy, estimatedMinutes: c.estimatedMinutes,
+          segments: c.segments?.map((s) => ({ ...s, requiresUserPresence: s.type !== "PASSIVE" })),
+          recurrence: c.recurrence ? { freq: c.recurrence.freq, interval: 1, byWeekday: c.recurrence.byWeekday } : undefined,
+          dueDate: c.dueInDays != null ? isoInDays(c.dueInDays) : undefined,
+        });
+      }
       close(); refresh();
     } catch (e) { setNote(`Couldn't configure: ${e instanceof Error ? e.message : "error"}`); }
     finally { setBusy(false); }
@@ -117,8 +121,8 @@ export default function TasksPage() {
 
         {!editingId && (
           <>
-            <label>Describe it (optional) — Claudio will set it up</label>
-            <textarea value={description} placeholder="e.g. Laundry: run a load, hang to dry ~90 min, then fold. Weekly on Saturdays." onChange={(e) => setDescription(e.target.value)} />
+            <label>Describe it (optional) — Claudio sets it up, incl. follow-ups</label>
+            <textarea value={description} placeholder="e.g. Laundry every Saturday: run a load, dry ~90 min, then a quick fold. Also create a separate 'Fold &amp; put away' task the next day." onChange={(e) => setDescription(e.target.value)} />
           </>
         )}
 
@@ -174,15 +178,24 @@ export default function TasksPage() {
 
         <div style={{ marginTop: 18 }}>
           {!editingId && (
-            <button className="btn primary block" onClick={withClaudio} disabled={busy} style={{ marginBottom: 10 }}>
-              {busy ? "Configuring…" : "✦ Let Claudio set it up"}
-            </button>
+            <>
+              <button className="btn primary block" onClick={withClaudio} disabled={busy} style={{ marginBottom: 8 }}>
+                {busy ? "Configuring…" : "✦ Let Claudio set it up"}
+              </button>
+              <p className="small muted" style={{ margin: "0 0 10px", textAlign: "center" }}>Uses your description — and can add follow-ups (e.g. fold the next day).</p>
+            </>
           )}
-          <button className="btn secondary block" onClick={save} disabled={busy}>{editingId ? "Save changes" : "Add task"}</button>
+          <button className="btn secondary block" onClick={save} disabled={busy}>{editingId ? "Save changes" : "Add manually (ignores description)"}</button>
         </div>
       </Sheet>
     </>
   );
+}
+
+function isoInDays(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + Math.round(days));
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function cadenceLabel(r: NonNullable<StoredTask["recurrence"]>): string {
