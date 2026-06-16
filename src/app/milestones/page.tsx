@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Sheet } from "@/components/Sheet";
-import { applyPlanSpecialization, createMilestoneWithPlan, deleteMilestone, getSettings, listMilestones } from "@/lib/engine";
-import { hasApiKey, specializePlan } from "@/lib/ai";
+import { createMilestoneWithPlan, deleteMilestone, getSettings, listMilestones, replaceWithAIPlan } from "@/lib/engine";
+import { generateTailoredPlan, hasApiKey } from "@/lib/ai";
 import { DEFAULT_MODEL, type StoredMilestone } from "@/lib/store";
 
 export default function MilestonesPage() {
@@ -16,6 +16,7 @@ export default function MilestonesPage() {
   const [context, setContext] = useState("");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
+  const [regenId, setRegenId] = useState<string | null>(null);
 
   const refresh = () => setItems(listMilestones());
   useEffect(refresh, []);
@@ -28,18 +29,41 @@ export default function MilestonesPage() {
     const details = context.trim() ? { context: context.trim() } : {};
     const m = createMilestoneWithPlan({ title: title.trim(), domain, targetDate, weeklyHoursBudget: hours, details });
     refresh();
-    if (hasApiKey()) {
-      setNote("Claudio is personalizing your plan…");
-      try {
-        const spec = await specializePlan({ ...m, details });
-        applyPlanSpecialization(m.id, spec.rationale, spec.phases, getSettings().model || DEFAULT_MODEL);
-      } catch { /* keep the deterministic plan */ }
+
+    if (!hasApiKey()) {
+      setBusy(false); setOpen(false);
+      return; // generic template; the card prompts to add a key
+    }
+
+    setNote(`Claudio is tailoring your plan to the ${title.trim()}…`);
+    try {
+      const plan = await generateTailoredPlan({ title: title.trim(), domain, targetDate, weeklyHours: hours, context: context.trim() });
+      replaceWithAIPlan(m.id, plan, getSettings().model || DEFAULT_MODEL);
+      refresh();
+      setBusy(false); setOpen(false);
+    } catch (e) {
+      // Keep the generic plan but tell the user it didn't personalize.
+      setBusy(false);
+      setNote(`Couldn't reach Claudio (${e instanceof Error ? e.message : "error"}). Saved a generic template — fix your API key in Settings and recreate, or try again.`);
       refresh();
     }
-    setBusy(false); setOpen(false);
   }
 
   function remove(id: string) { deleteMilestone(id); refresh(); }
+
+  async function retailor(m: StoredMilestone) {
+    if (!hasApiKey()) return;
+    setRegenId(m.id);
+    try {
+      const plan = await generateTailoredPlan({
+        title: m.title, domain: m.domain, targetDate: m.targetDate,
+        weeklyHours: m.weeklyHoursBudget, context: String((m.details as { context?: string })?.context ?? ""),
+      });
+      replaceWithAIPlan(m.id, plan, getSettings().model || DEFAULT_MODEL);
+      refresh();
+    } catch { /* keep existing plan */ }
+    finally { setRegenId(null); }
+  }
 
   return (
     <>
@@ -70,6 +94,11 @@ export default function MilestonesPage() {
                   {m.plan.generatedByModel && <span className="pill done" style={{ marginRight: 6 }}>✦ personalized</span>}
                   {m.plan.rationale}
                 </div>
+                {hasApiKey() && (
+                  <button className="btn ghost block" style={{ marginBottom: 12 }} onClick={() => retailor(m)} disabled={regenId === m.id}>
+                    {regenId === m.id ? "Tailoring…" : m.plan.generatedByModel ? "↻ Re-tailor with Claudio" : "✦ Tailor to this exam with Claudio"}
+                  </button>
+                )}
                 {m.plan.phases.map((p) => (
                   <div key={p.order} className="phase">
                     <div className="title">{p.order + 1}. {p.name}</div>

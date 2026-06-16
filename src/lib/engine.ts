@@ -304,20 +304,68 @@ export function listMilestones(): StoredMilestone[] {
   return loadState().milestones;
 }
 
-/** Apply Claude-personalized objectives + rationale to a milestone's plan. */
-export function applyPlanSpecialization(
-  milestoneId: string,
-  rationale: string,
-  phases: { order: number; objectives: string[] }[],
-  model: string,
-): void {
+/** A full plan produced by Claude, tailored to the specific exam/goal. Dates are
+ *  computed deterministically here from each phase's `fraction` of the timeline. */
+export interface AIPlan {
+  rationale: string;
+  phases: { name: string; fraction: number; focus: string[]; objectives: string[] }[];
+  activities: { title: string; minutes: number; perWeek: number; energy: "LOW" | "MED" | "HIGH"; timeOfDay: "MORNING" | "MIDDAY" | "EVENING" | "ANY"; phase: number }[];
+}
+
+/** Replace a milestone's plan + spawned tasks with a Claude-tailored plan. */
+export function replaceWithAIPlan(milestoneId: string, plan: AIPlan, model: string): void {
   const s = loadState();
   const m = s.milestones.find((x) => x.id === milestoneId);
-  if (!m?.plan) return;
-  const byOrder = new Map(phases.map((p) => [p.order, p.objectives]));
-  m.plan.rationale = rationale;
-  m.plan.generatedByModel = model;
-  m.plan.phases = m.plan.phases.map((p) => ({ ...p, objectives: byOrder.get(p.order) ?? p.objectives }));
+  if (!m || !plan.phases?.length) return;
+  const today = DateTime.now().toISODate()!;
+
+  const skeleton = plan.phases.map((p) => ({
+    name: p.name,
+    proportion: Math.max(0.01, p.fraction || 1),
+    focusAreas: p.focus ?? [],
+    objectives: p.objectives ?? [],
+    archetypeKeys: [],
+  }));
+  const dated = computeDatedPhases(today, m.targetDate, skeleton, m.weeklyHoursBudget);
+
+  m.plan = {
+    rationale: plan.rationale,
+    generatedByModel: model,
+    phases: dated.map((d, i) => ({
+      order: d.order,
+      name: plan.phases[i].name,
+      startDate: d.startDate,
+      endDate: d.endDate,
+      objectives: plan.phases[i].objectives ?? [],
+      focusAreas: plan.phases[i].focus ?? [],
+    })),
+  };
+
+  // Re-spawn study tasks from the AI activities for the phase that holds today.
+  s.tasks = s.tasks.filter((t) => t.planMilestoneId !== milestoneId);
+  const curIdx = dated.findIndex((d) => today >= d.startDate && today <= d.endDate);
+  let phaseIdx = curIdx >= 0 ? curIdx : 0;
+  if (!plan.activities?.some((a) => a.phase === phaseIdx)) phaseIdx = 0;
+
+  for (const a of plan.activities ?? []) {
+    if (a.phase !== phaseIdx) continue;
+    const perWeek = Math.min(7, Math.max(1, Math.round(a.perWeek || 3)));
+    s.tasks.unshift({
+      id: id("task"),
+      title: a.title,
+      kind: "STUDY",
+      priority: 2,
+      estimatedMinutes: Math.max(10, Math.round(a.minutes || 25)),
+      estimateSource: "APP_SUGGESTED",
+      preferredTimeOfDay: a.timeOfDay || "ANY",
+      energy: a.energy || "MED",
+      status: "PENDING",
+      segments: [],
+      recurrence: { freq: "WEEKLY", interval: 1, byWeekday: [1, 2, 3, 4, 5, 6, 7].slice(0, perWeek) },
+      planMilestoneId: milestoneId,
+      createdAt: new Date().toISOString(),
+    });
+  }
   saveState(s);
 }
 
@@ -356,7 +404,7 @@ export function createMilestoneWithPlan(input: {
   if (playbook) {
     const phases = computeDatedPhases(today, input.targetDate, playbook.phaseSkeleton, input.weeklyHoursBudget);
     milestone.plan = {
-      rationale: "Plan generated from the expert playbook skeleton. Enable the AI action for personalization.",
+      rationale: "Generic expert template. Add your Anthropic API key in Settings so Claudio tailors this to your specific exam (format, your level, and weak areas).",
       generatedByModel: null,
       phases: phases.map((p) => ({
         order: p.order,

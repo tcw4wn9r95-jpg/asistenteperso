@@ -6,6 +6,7 @@
 import { DateTime } from "luxon";
 import { DEFAULT_MODEL, StoredMilestone } from "./store";
 import {
+  AIPlan,
   buildDay,
   createTask,
   deleteTask,
@@ -169,32 +170,40 @@ export interface ConfiguredTask {
 }
 
 /**
- * Personalize a milestone's plan with Claude — grounded by the expert playbook so
- * the result is specialized, not a generic AI study plan. Returns a new rationale
- * and per-phase objectives; the deterministic dates/order are never touched.
+ * Generate a full study plan tailored to a SPECIFIC, named exam/goal — phases and
+ * concrete activities — honoring the real exam format and the learner's context.
+ * The expert playbook is used as guidance, not a rigid template, so e.g. an exam
+ * with no written section yields no writing work. Dates are computed by the engine.
  */
-export async function specializePlan(
-  milestone: StoredMilestone,
-): Promise<{ rationale: string; phases: { order: number; objectives: string[] }[] }> {
-  const playbook = getPlaybookForDomain(milestone.domain);
-  const phases = milestone.plan?.phases ?? [];
-  const ctx = JSON.stringify({
-    goal: milestone.title,
-    targetDate: milestone.targetDate,
-    weeklyHours: milestone.weeklyHoursBudget,
-    context: milestone.details,
-    phases: phases.map((p) => ({ order: p.order, name: p.name, focusAreas: p.focusAreas, start: p.startDate, end: p.endDate })),
-  });
+export async function generateTailoredPlan(input: {
+  title: string;
+  domain: StoredMilestone["domain"];
+  targetDate: string;
+  weeklyHours: number;
+  context: string;
+}): Promise<AIPlan> {
+  const playbook = getPlaybookForDomain(input.domain);
+  const today = DateTime.now().toISODate();
+  const system = [
+    "You are an elite coach designing a study plan for a SPECIFIC, NAMED exam or goal.",
+    "Use your knowledge of that exact exam's real format and the learner's stated context.",
+    "CRITICAL: do not include any skill the exam does not assess. If it has no written or reading section, include zero writing/reading work; if it is oral-only, focus on listening and speaking.",
+    playbook ? `Methodology to adapt (do not copy blindly): ${playbook.groundingPrompt}` : "",
+    `Today is ${today}. The exam/target date is ${input.targetDate}. The learner has about ${input.weeklyHours} hours per week.`,
+    'Return ONLY a JSON object: {"rationale":string,"phases":[{"name":string,"fraction":number,"focus":string[],"objectives":string[]}],"activities":[{"title":string,"minutes":number,"perWeek":number,"energy":"LOW"|"MED"|"HIGH","timeOfDay":"MORNING"|"MIDDAY"|"EVENING"|"ANY","phase":number}]}.',
+    "Use 2-4 ordered phases whose `fraction` values are positive and sum to ~1.0 (front-load foundations, finish with exam-format drilling). `phase` in each activity is a 0-based index into phases. Activities must be concrete and appropriate to THIS exam. The rationale (1-2 sentences) should reference the specific exam and the learner's context. No prose outside the JSON.",
+  ].filter(Boolean).join(" ");
+
   const res = await callAnthropic({
-    max_tokens: 1200,
-    system:
-      (playbook?.groundingPrompt ?? "You are an expert coach.") +
-      ' Return ONLY JSON: {"rationale":string,"phases":[{"order":number,"objectives":string[]}]}. ' +
-      "Keep the same phase orders and dates; only write concrete, personalized objectives for the learner. No prose outside JSON.",
-    messages: [{ role: "user", content: `Specialize these phase objectives to the learner:\n${ctx}` }],
+    max_tokens: 1800,
+    system,
+    messages: [{ role: "user", content: `Goal: ${input.title}\nLearner context / instructions: ${input.context || "(none provided)"}` }],
   });
   const text = textOf(res.content);
-  return JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
+  const parsed = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as AIPlan;
+  if (!Array.isArray(parsed.phases) || parsed.phases.length === 0) throw new Error("Invalid plan from model");
+  parsed.activities = Array.isArray(parsed.activities) ? parsed.activities : [];
+  return parsed;
 }
 
 export async function configureTask(description: string): Promise<ConfiguredTask> {
