@@ -170,10 +170,10 @@ export interface ConfiguredTask {
 }
 
 /**
- * Generate a full study plan tailored to a SPECIFIC, named exam/goal — phases and
- * concrete activities — honoring the real exam format and the learner's context.
- * The expert playbook is used as guidance, not a rigid template, so e.g. an exam
- * with no written section yields no writing work. Dates are computed by the engine.
+ * Generate a full plan tailored to ANY specific goal — phases and concrete
+ * recurring activities — driven by the user's own description, constraints and
+ * starting point. Works for exams, fitness, projects, habits, learning anything.
+ * The deterministic backward pass computes the phase dates from each fraction.
  */
 export async function generateTailoredPlan(input: {
   title: string;
@@ -185,19 +185,19 @@ export async function generateTailoredPlan(input: {
   const playbook = getPlaybookForDomain(input.domain);
   const today = DateTime.now().toISODate();
   const system = [
-    "You are an elite coach designing a study plan for a SPECIFIC, NAMED exam or goal.",
-    "Use your knowledge of that exact exam's real format and the learner's stated context.",
-    "CRITICAL: do not include any skill the exam does not assess. If it has no written or reading section, include zero writing/reading work; if it is oral-only, focus on listening and speaking.",
-    playbook ? `Methodology to adapt (do not copy blindly): ${playbook.groundingPrompt}` : "",
-    `Today is ${today}. The exam/target date is ${input.targetDate}. The learner has about ${input.weeklyHours} hours per week.`,
+    "You are an elite coach and planner. Build a concrete, personalized plan to achieve ONE specific goal by a deadline.",
+    "Base the plan primarily on the person's own description, instructions, constraints and starting point — follow them faithfully.",
+    "Tailor everything to THIS goal. Do not include components that don't apply to it. If it is an exam, respect that exam's real format and skip sections it doesn't test; if it is a fitness, project, creative or habit goal, structure it appropriately for that.",
+    playbook ? `Optional domain methodology you may draw on if relevant: ${playbook.groundingPrompt}` : "",
+    `Today is ${today}. The target date is ${input.targetDate}. The person has about ${input.weeklyHours} hours per week.`,
     'Return ONLY a JSON object: {"rationale":string,"phases":[{"name":string,"fraction":number,"focus":string[],"objectives":string[]}],"activities":[{"title":string,"minutes":number,"perWeek":number,"energy":"LOW"|"MED"|"HIGH","timeOfDay":"MORNING"|"MIDDAY"|"EVENING"|"ANY","phase":number}]}.',
-    "Use 2-4 ordered phases whose `fraction` values are positive and sum to ~1.0 (front-load foundations, finish with exam-format drilling). `phase` in each activity is a 0-based index into phases. Activities must be concrete and appropriate to THIS exam. The rationale (1-2 sentences) should reference the specific exam and the learner's context. No prose outside the JSON.",
+    "Use 2-4 ordered phases whose `fraction` values are positive and sum to ~1.0 (front-load foundations, finish close to the target). `phase` in each activity is a 0-based index into phases. Make activities concrete, specific to this goal, and fit within the weekly hours. The rationale (1-2 sentences) must reference the specific goal and the person's stated context. No prose outside the JSON.",
   ].filter(Boolean).join(" ");
 
   const res = await callAnthropic({
     max_tokens: 1800,
     system,
-    messages: [{ role: "user", content: `Goal: ${input.title}\nLearner context / instructions: ${input.context || "(none provided)"}` }],
+    messages: [{ role: "user", content: `Goal: ${input.title}\nDeadline: ${input.targetDate}\nMy instructions, constraints & starting point:\n${input.context || "(none provided — use sensible best practice for this goal)"}` }],
   });
   const text = textOf(res.content);
   const parsed = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as AIPlan;

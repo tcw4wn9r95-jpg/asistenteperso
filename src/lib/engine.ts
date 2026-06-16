@@ -300,6 +300,14 @@ function streakKey(s: AppState, block: StoredBlock): string {
 
 // ---------- Milestones ----------
 
+// Fallback phase skeleton for any goal when no AI key is set. Generic on purpose
+// — the real tailoring comes from Claude (generateTailoredPlan).
+const GENERIC_SKELETON = [
+  { name: "Foundation", proportion: 0.4, focusAreas: ["fundamentals", "routine"], objectives: ["Establish the basics and a steady weekly routine"], archetypeKeys: [] },
+  { name: "Build", proportion: 0.35, focusAreas: ["progress"], objectives: ["Develop the core skills and build momentum"], archetypeKeys: [] },
+  { name: "Final push", proportion: 0.25, focusAreas: ["readiness"], objectives: ["Consolidate and get ready for the target date"], archetypeKeys: [] },
+];
+
 export function listMilestones(): StoredMilestone[] {
   return loadState().milestones;
 }
@@ -390,6 +398,7 @@ export function createMilestoneWithPlan(input: {
 }): StoredMilestone {
   const s = loadState();
   const playbook = getPlaybookForDomain(input.domain);
+  const skeleton = playbook?.phaseSkeleton ?? GENERIC_SKELETON;
   const today = DateTime.now().toISODate()!;
 
   const milestone: StoredMilestone = {
@@ -401,22 +410,23 @@ export function createMilestoneWithPlan(input: {
     weeklyHoursBudget: input.weeklyHoursBudget,
   };
 
-  if (playbook) {
-    const phases = computeDatedPhases(today, input.targetDate, playbook.phaseSkeleton, input.weeklyHoursBudget);
-    milestone.plan = {
-      rationale: "Generic expert template. Add your Anthropic API key in Settings so Claudio tailors this to your specific exam (format, your level, and weak areas).",
-      generatedByModel: null,
-      phases: phases.map((p) => ({
-        order: p.order,
-        name: p.name,
-        startDate: p.startDate,
-        endDate: p.endDate,
-        objectives: p.objectives,
-        focusAreas: p.focusAreas,
-      })),
-    };
+  const phases = computeDatedPhases(today, input.targetDate, skeleton, input.weeklyHoursBudget);
+  milestone.plan = {
+    rationale: "Generic outline. Add your Anthropic API key in Settings so Claudio tailors this plan to your goal and instructions.",
+    generatedByModel: null,
+    phases: phases.map((p) => ({
+      order: p.order,
+      name: p.name,
+      startDate: p.startDate,
+      endDate: p.endDate,
+      objectives: p.objectives,
+      focusAreas: p.focusAreas,
+    })),
+  };
 
-    // Spawn recurring study tasks for the phase that contains today.
+  // Only registered playbooks have task archetypes to spawn; generic goals get
+  // their tasks from the AI plan instead.
+  if (playbook) {
     const current = phases.find((p) => today >= p.startDate && today <= p.endDate) ?? phases[0];
     for (const key of current.archetypeKeys) {
       const arch = playbook.taskArchetypes.find((a) => a.key === key);

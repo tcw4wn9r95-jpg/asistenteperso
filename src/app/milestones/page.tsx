@@ -10,7 +10,6 @@ export default function MilestonesPage() {
   const [items, setItems] = useState<StoredMilestone[]>([]);
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
-  const [domain, setDomain] = useState<StoredMilestone["domain"]>("LANGUAGE_EXAM");
   const [targetDate, setTargetDate] = useState("");
   const [hours, setHours] = useState(5);
   const [context, setContext] = useState("");
@@ -21,30 +20,30 @@ export default function MilestonesPage() {
   const refresh = () => setItems(listMilestones());
   useEffect(refresh, []);
 
-  function openAdd() { setTitle(""); setTargetDate(""); setContext(""); setHours(5); setDomain("LANGUAGE_EXAM"); setNote(""); setOpen(true); }
+  function openAdd() { setTitle(""); setTargetDate(""); setContext(""); setHours(5); setNote(""); setOpen(true); }
 
   async function create() {
     if (!title.trim() || !targetDate) return;
     setBusy(true);
     const details = context.trim() ? { context: context.trim() } : {};
-    const m = createMilestoneWithPlan({ title: title.trim(), domain, targetDate, weeklyHoursBudget: hours, details });
+    const m = createMilestoneWithPlan({ title: title.trim(), domain: "GENERIC", targetDate, weeklyHoursBudget: hours, details });
     refresh();
 
     if (!hasApiKey()) {
       setBusy(false); setOpen(false);
-      return; // generic template; the card prompts to add a key
+      return; // generic outline; the card prompts to add a key
     }
 
-    setNote(`Claudio is tailoring your plan to the ${title.trim()}…`);
+    setNote("Claudio is tailoring your plan…");
     try {
-      const plan = await generateTailoredPlan({ title: title.trim(), domain, targetDate, weeklyHours: hours, context: context.trim() });
+      const plan = await generateTailoredPlan({ title: title.trim(), domain: "GENERIC", targetDate, weeklyHours: hours, context: context.trim() });
       replaceWithAIPlan(m.id, plan, getSettings().model || DEFAULT_MODEL);
       refresh();
       setBusy(false); setOpen(false);
     } catch (e) {
-      // Keep the generic plan but tell the user it didn't personalize.
+      // Keep the generic outline but tell the user exactly what went wrong.
       setBusy(false);
-      setNote(`Couldn't reach Claudio (${e instanceof Error ? e.message : "error"}). Saved a generic template — fix your API key in Settings and recreate, or try again.`);
+      setNote(`Couldn't tailor: ${e instanceof Error ? e.message : "error"}. Saved a generic outline — check your key/model in Settings, then tap "Re-tailor" on the goal.`);
       refresh();
     }
   }
@@ -75,8 +74,8 @@ export default function MilestonesPage() {
       {items.length === 0 ? (
         <div className="empty hero">
           <div className="hero-mark">◎</div>
-          <h2>Set a milestone</h2>
-          <p>Name a goal and its date — like passing a language exam — and Claudio builds a phased plan backwards from the deadline and schedules the work.</p>
+          <h2>Set a goal</h2>
+          <p>Any goal with a deadline — an exam, a race, a side-project, a new habit. Describe how you want to approach it and Claudio plans backwards from the date and schedules the work.</p>
         </div>
       ) : (
         items.map((m) => (
@@ -96,7 +95,7 @@ export default function MilestonesPage() {
                 </div>
                 {hasApiKey() && (
                   <button className="btn ghost block" style={{ marginBottom: 12 }} onClick={() => retailor(m)} disabled={regenId === m.id}>
-                    {regenId === m.id ? "Tailoring…" : m.plan.generatedByModel ? "↻ Re-tailor with Claudio" : "✦ Tailor to this exam with Claudio"}
+                    {regenId === m.id ? "Tailoring…" : m.plan.generatedByModel ? "↻ Re-tailor with Claudio" : "✦ Tailor to my goal with Claudio"}
                   </button>
                 )}
                 {m.plan.phases.map((p) => (
@@ -116,25 +115,29 @@ export default function MilestonesPage() {
 
       <Sheet open={open} onClose={() => !busy && setOpen(false)} title="New goal">
         <label>What's the goal?</label>
-        <input value={title} placeholder="e.g. Pass B2 Spanish exam" onChange={(e) => setTitle(e.target.value)} autoFocus />
+        <input value={title} placeholder="e.g. Pass the Luxembourgish Sproochentest" onChange={(e) => setTitle(e.target.value)} autoFocus />
+
+        <label>How should Claudio approach it? — this drives the whole plan</label>
+        <textarea
+          rows={4}
+          value={context}
+          placeholder="Describe the goal, any specifics or constraints, where you're starting from, and how you'd like to prepare. e.g. 'The Sproochentest is oral only — comprehension + speaking, no writing or reading. I'm conversational but freeze under pressure. Focus on listening and mock oral interviews.'"
+          onChange={(e) => setContext(e.target.value)}
+        />
+
         <div className="row">
-          <div style={{ flex: 1 }}>
-            <label>Domain</label>
-            <select value={domain} onChange={(e) => setDomain(e.target.value as StoredMilestone["domain"])}>
-              <option value="LANGUAGE_EXAM">Language exam</option><option value="FITNESS">Fitness event</option>
-            </select>
-          </div>
           <div style={{ flex: 1 }}>
             <label>Target date</label>
             <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} />
           </div>
+          <div style={{ flex: 1 }}>
+            <label>Hours / week</label>
+            <input type="number" min={1} value={hours} onChange={(e) => setHours(Number(e.target.value))} />
+          </div>
         </div>
-        <label>Hours per week you can commit</label>
-        <input type="number" min={1} value={hours} onChange={(e) => setHours(Number(e.target.value))} />
-        <label>Where you stand (optional) — Claudio tailors the plan</label>
-        <textarea value={context} placeholder="e.g. Around B1; weakest at listening and speaking; grammar is fine." onChange={(e) => setContext(e.target.value)} />
+
         {note && <p className="small" style={{ marginTop: 12 }}>{note}</p>}
-        <p className="small muted" style={{ marginTop: 12 }}>{hasApiKey() ? "Claudio will personalize each phase." : "Add an API key in Settings for AI-personalized plans."}</p>
+        <p className="small muted" style={{ marginTop: 12 }}>{hasApiKey() ? "Claudio will build a plan tailored to exactly what you wrote." : "Add an API key in Settings so Claudio can tailor the plan — otherwise you'll get a generic outline."}</p>
         <button className="btn primary block" style={{ marginTop: 8 }} onClick={create} disabled={busy}>{busy ? "Building…" : "Create & build plan"}</button>
       </Sheet>
     </>
