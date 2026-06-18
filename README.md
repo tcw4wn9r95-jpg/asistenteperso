@@ -1,76 +1,45 @@
-# Claudio — Personal Time Assistant
+# Claudio
 
-A personal assistant that brings structure to chaotic (newborn-era) days. It plans
-your day around big milestones, recurring chores, and what your other apps say you
-should do — then lets you review, drag things around, approve, and stay accountable.
+> A calm weekly companion that always knows the next right thing — and quietly reshuffles when life happens.
 
-It's a **zero-backend static PWA**, the same architecture as your other apps
-(**Coach Claudio** / `training-ai` and **NutriPrep**): a static site on GitHub Pages,
-data on-device, and integrations read from public JSON in those repos.
+A **flexible momentum engine**, not a rigid scheduler. It's a zero-backend static
+PWA (GitHub Pages), on-device data, with Claude working *behind* the UI.
 
 ## What it does
 
-- **Milestone backward-planning** — enter a goal + date (e.g. "Pass B2 Spanish exam");
-  an expert *playbook* + a deterministic backward pass produce dated, sequenced phases
-  and spawn the study tasks for the current phase.
-- **Smart chores with passive time** — tasks have ACTIVE and PASSIVE segments. Laundry
-  (load → *dry* → fold) reserves the drying gap but hands it back so other work fills it.
-- **Flexible tasks** — one-off or recurring, priority, preferred time, energy, and an
-  app-suggested time estimate.
-- **Daily review** — `Build my day` proposes a schedule (auto-schedule + approval gate).
-  Drag the ⠿ handle to move a block (15-min snap); moved blocks pin, then `Reflow day`
-  rearranges everything else around them. `Approve` to lock it in.
-- **Real integrations** — pulls your training from `training-ai/weekly_plan.json` and your
-  meals/prep from `nutriprep/weekly_menu.json` + `prep_plan.json`, and fits them into the day.
-- **Accountability** — implementation-intention-style check-ins (✓/✗) build streaks.
-- **Claudio chatbot** — optional; needs an external Claude endpoint (see below).
+- **Week at a glance** — your whole week in one screen; today first.
+- **Quick capture** — type anything ("call the dentist") and it's auto-placed on the
+  best day within the next few days.
+- **Goals → daily steps** — set a goal + date; Claude designs one small recurring step
+  and weaves it through your week; progress + streak per goal.
+- **Chores** — recurring upkeep with multi-stage waits (laundry: load → dry → fold) and
+  Claude-shaped follow-ups ("fold the next day").
+- **Self-healing** — items have flex windows; miss a day and undone work **rolls forward**
+  and rebalances, then shows a short "moved N forward" summary. One off day never derails.
+- **Momentum** — streaks grounded in the science of consistency over perfection.
+- **Coach Claudio** — your workouts appear on the right day (reads `training-ai`'s JSON).
 
 ## Architecture
 
 | Concern | How |
 |---|---|
-| Hosting | Static export (`next build` → `out/`) on **GitHub Pages** (`.github/workflows/deploy.yml`) |
-| Engine | Pure TypeScript scheduler + planner running **in the browser** (`src/server/scheduling`, `src/server/planning`) |
-| Data | **On-device** `localStorage` (`src/lib/store.ts`); no database, no login |
-| Integrations | Browser `fetch` of public repo JSON via raw.githubusercontent (CORS-friendly) — `src/server/integrations` |
-| AI (optional) | A Claude-backed endpoint (serverless / Action), like AthleteIQ — not required for the core app |
+| Hosting | Static export → **GitHub Pages** (`.github/workflows/deploy.yml`) |
+| Data | On-device `localStorage` (`src/lib/model.ts`) — no backend, no login |
+| Planner | `src/lib/planner.ts` — week-level self-healing assignment + the pure intraday scheduler (`src/server/scheduling`) |
+| AI | Claude direct from the browser with your key (`src/lib/ai.ts`) — capture, chores, goal steps |
+| Integrations | `src/server/integrations` reads Coach Claudio's committed JSON |
 
-The deterministic engine (`src/lib/engine.ts`) reuses the same pure modules that are unit-tested.
-
-## Run it locally
+## Run locally
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000  (redirects to /today)
+npm run dev      # http://localhost:3000
+npm test         # scheduler/backward-pass unit tests
+npm run build    # static export → ./out
 ```
 
-No env vars or database needed. First run seeds a sample laundry chore so the day isn't empty.
+No env/database needed. Add an Anthropic API key in **Settings** to enable the smart
+capture, chore setup and goal plans (stored on-device, sent straight to Anthropic).
+Set your real **available hours** in Settings so the day/time placement makes sense.
 
-```bash
-npm test           # scheduler + backward-pass unit tests
-npm run build      # static export into ./out
-```
-
-## Deploy (GitHub Pages)
-
-Pushing to the default branch runs `.github/workflows/deploy.yml`, which builds the static
-export with `NEXT_PUBLIC_BASE_PATH=/asistenteperso` (the project-page path) and publishes it.
-Enable Pages once: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-
-Your app will be at `https://<your-user>.github.io/asistenteperso/`.
-
-## Add to your Home Screen (PWA)
-
-Once deployed (HTTPS), open the URL on your phone:
-- **iOS (Safari):** Share → **Add to Home Screen**
-- **Android (Chrome):** menu → **Install app**
-
-It launches full-screen with its own icon. Manifest: `src/app/manifest.ts`; service worker:
-`public/sw.js`; icons via `npm run gen:icons` (`scripts/gen-icons.mjs`).
-
-## Enabling the Claudio chatbot
-
-The static app has no server, so the chatbot calls an external Claude-backed endpoint that
-holds the API key (a small serverless function or an Action proxy — mirroring AthleteIQ's
-"Claude runs in the Action" model). Set `NEXT_PUBLIC_CHAT_ENDPOINT` to that endpoint's URL.
-Everything else works without it.
+Deploys on push via GitHub Actions (Settings → Pages → Source: GitHub Actions).
