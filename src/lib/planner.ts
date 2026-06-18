@@ -155,7 +155,9 @@ export async function planWeek(start = todayISO()): Promise<WeekPlan> {
           ? it.segments.map((g) => ({ type: g.type, label: g.label, minutes: g.minutes, requiresUserPresence: g.type !== "PASSIVE" }))
           : [{ type: "ACTIVE" as const, label: it.title, minutes: it.minutes, requiresUserPresence: true }],
       }));
-    const res = scheduleDay(candidates, buildFreeWindows(weekly, weekdayOf(d)));
+    const windows = buildFreeWindows(weekly, weekdayOf(d));
+    const dayEnd = windows.length ? Math.max(...windows.map((w) => w.end)) : 22 * 60;
+    const res = scheduleDay(candidates, windows, { dayEnd });
     const startByTask: Record<string, number> = {};
     const endByTask: Record<string, number> = {};
     for (const b of res.blocks) {

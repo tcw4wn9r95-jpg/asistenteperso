@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { DayWindow, getAvailability, getSettings, saveAvailability, saveSettings, DEFAULT_MODEL } from "@/lib/model";
 import { ping } from "@/lib/ai";
+import { requestNotificationPermission } from "@/lib/nudges";
 
 export default function SettingsPage() {
   const [key, setKey] = useState("");
@@ -12,14 +13,27 @@ export default function SettingsPage() {
   const [weekday, setWeekday] = useState<DayWindow[]>([]);
   const [weekend, setWeekend] = useState<DayWindow[]>([]);
   const [savedHours, setSavedHours] = useState(false);
+  const [reminders, setReminders] = useState(false);
+  const [remNote, setRemNote] = useState("");
 
   useEffect(() => {
     const s = getSettings();
     setKey(s.anthropicKey ?? "");
     setModel(s.model ?? DEFAULT_MODEL);
+    setReminders(Boolean(s.remindersEnabled));
     const a = getAvailability();
     setWeekday(a.weekday); setWeekend(a.weekend);
   }, []);
+
+  async function toggleReminders(on: boolean) {
+    if (on) {
+      const granted = await requestNotificationPermission();
+      if (!granted) { setRemNote("Notifications are blocked — enable them for this site in your browser/OS settings."); setReminders(false); saveSettings({ remindersEnabled: false }); return; }
+      setRemNote("On. You'll be nudged at an item's time while the app is open.");
+    } else { setRemNote(""); }
+    setReminders(on);
+    saveSettings({ remindersEnabled: on });
+  }
 
   function saveKey() { saveSettings({ anthropicKey: key.trim() || undefined, model: model.trim() || DEFAULT_MODEL }); setStatus("Saved."); }
   async function test() {
@@ -44,6 +58,18 @@ export default function SettingsPage() {
           <span className="spacer" />
           <button className="btn sm" onClick={saveHours}>Save hours</button>
         </div>
+      </div>
+
+      <div className="section-label">Reminders</div>
+      <div className="card">
+        <div className="row">
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600 }}>Nudge me at the time</div>
+            <div className="small muted">A live “Up next” on your Week, plus a notification when an item’s time arrives (while the app is open).</div>
+          </div>
+          <input type="checkbox" className="switch" checked={reminders} onChange={(e) => toggleReminders(e.target.checked)} />
+        </div>
+        {remNote && <p className="small" style={{ marginTop: 10 }}>{remNote}</p>}
       </div>
 
       <div className="section-label">Claudio AI</div>

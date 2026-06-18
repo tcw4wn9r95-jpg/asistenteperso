@@ -59,7 +59,7 @@ export type Outcome = "DONE" | "SKIPPED";
 export interface Streak { current: number; longest: number; last: string | null }
 
 export interface State {
-  settings: { anthropicKey?: string; model?: string };
+  settings: { anthropicKey?: string; model?: string; remindersEnabled?: boolean };
   availability: { weekday: DayWindow[]; weekend: DayWindow[] };
   chores: Chore[];
   goals: Goal[];
