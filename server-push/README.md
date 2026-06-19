@@ -37,6 +37,24 @@ npx wrangler secret put VAPID_PRIVATE_KEY      # paste the privateKey from step 
 npx wrangler deploy
 ```
 
+## Automated deploys (GitHub Actions)
+
+After the one-time setup above, you can let CI redeploy the worker on every change
+instead of running `wrangler deploy` by hand. The workflow lives at
+`.github/workflows/deploy-push-worker.yml` and runs whenever `server-push/**` changes
+on `main` (or via **Actions → Deploy push worker → Run workflow**).
+
+It needs three repository secrets (**Settings → Secrets and variables → Actions**):
+
+| Secret | Where it comes from |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare dashboard → My Profile → API Tokens → "Edit Cloudflare Workers" template |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare dashboard → Workers & Pages (right sidebar) |
+| `VAPID_PRIVATE_KEY` | the `privateKey` printed by `npm run vapid` (step 1 above) |
+
+The KV namespace id still has to be filled into `wrangler.toml` once (step 2 above) —
+CI deploys against whatever id is committed there.
+
 ## Connect the app
 
 1. Open Claudio → **Settings → Reminders → “…even when the app is closed.”**

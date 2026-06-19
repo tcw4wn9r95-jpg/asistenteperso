@@ -3,6 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Serve at https://claudio-push.<account>.workers.dev (the URL the app connects to).
+# Preview URLs aren't needed for this single-purpose worker.
+workers_dev = true
+preview_urls = false
+
 # Per-minute cron sends any reminders that have just come due.
 [triggers]
 crons = ["* * * * *"]
@@ -12,10 +17,10 @@ crons = ["* * * * *"]
 # then paste the printed id below.
 [[kv_namespaces]]
 binding = "SUBS"
-id = "REPLACE_WITH_YOUR_KV_ID"
+id = "9867c65893864a33ac11ad7697c076b4"
 
 [vars]
 # Public VAPID key (safe to expose) + a contact mailto. The PRIVATE key is set as
 # a secret, not here:  npx wrangler secret put VAPID_PRIVATE_KEY
-VAPID_PUBLIC_KEY = "BDhlN0sWGiUf6wiA_QqrpnhuHfIdu57Yh03jeZtGrbQcI0WyE2kb86cdH-GERLRTKDyYWhOsmmckKZ0T9AXDfIM"
+VAPID_PUBLIC_KEY = "BFgkyeP8IJPCsRf9k8DSU2ywt-eCSQfHZzbtQx_gMsBN4g-STs34Mf1khgVhnnMJZbNwSoiyQ0Ilk85wJd9Rw4Q"
 VAPID_SUBJECT = "mailto:dcasares.silva@gmail.com"

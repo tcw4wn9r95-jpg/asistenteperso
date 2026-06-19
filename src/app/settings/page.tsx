@@ -7,6 +7,15 @@ import { requestNotificationPermission } from "@/lib/nudges";
 import { disablePush, enablePush, testPush } from "@/lib/push";
 import { planWeek } from "@/lib/planner";
 
+const LEADS = [
+  { min: 0, label: "At time" },
+  { min: 5, label: "5 min" },
+  { min: 10, label: "10 min" },
+  { min: 15, label: "15 min" },
+  { min: 30, label: "30 min" },
+  { min: 60, label: "1 hr" },
+];
+
 export default function SettingsPage() {
   const [key, setKey] = useState("");
   const [model, setModel] = useState(DEFAULT_MODEL);
@@ -17,6 +26,9 @@ export default function SettingsPage() {
   const [savedHours, setSavedHours] = useState(false);
   const [reminders, setReminders] = useState(false);
   const [remNote, setRemNote] = useState("");
+  const [leadMin, setLeadMin] = useState(0);
+  const [quietStart, setQuietStart] = useState("");
+  const [quietEnd, setQuietEnd] = useState("");
   const [pushUrl, setPushUrl] = useState("");
   const [push, setPush] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
@@ -27,6 +39,9 @@ export default function SettingsPage() {
     setKey(s.anthropicKey ?? "");
     setModel(s.model ?? DEFAULT_MODEL);
     setReminders(Boolean(s.remindersEnabled));
+    setLeadMin(s.notifyLeadMin ?? 0);
+    setQuietStart(s.quietStart ?? "");
+    setQuietEnd(s.quietEnd ?? "");
     setPushUrl(s.pushUrl ?? "");
     setPush(Boolean(s.pushEnabled));
     const a = getAvailability();
@@ -50,6 +65,18 @@ export default function SettingsPage() {
     try { await testPush(); setPushNote("Sent — it should appear shortly."); }
     catch (e) { setPushNote(`✗ ${e instanceof Error ? e.message : "Failed"}`); }
     finally { setPushBusy(false); }
+  }
+
+  // Save notification timing, then re-upload the schedule so closed-app push
+  // reflects the new lead time / quiet hours immediately.
+  async function saveTiming(p: { notifyLeadMin?: number; quietStart?: string; quietEnd?: string }) {
+    saveSettings(p);
+    try { const { syncSchedule } = await import("@/lib/push"); await syncSchedule(await planWeek()); } catch { /* best effort */ }
+  }
+  function chooseLead(min: number) { setLeadMin(min); void saveTiming({ notifyLeadMin: min }); }
+  function changeQuiet(start: string, end: string) {
+    setQuietStart(start); setQuietEnd(end);
+    void saveTiming({ quietStart: start || undefined, quietEnd: end || undefined });
   }
 
   async function toggleReminders(on: boolean) {
@@ -97,6 +124,24 @@ export default function SettingsPage() {
           <input type="checkbox" className="switch" checked={reminders} onChange={(e) => toggleReminders(e.target.checked)} />
         </div>
         {remNote && <p className="small" style={{ marginTop: 10 }}>{remNote}</p>}
+
+        <div className="divider" />
+        <div style={{ fontWeight: 600 }}>When should they fire?</div>
+        <div className="small muted" style={{ marginBottom: 10 }}>Applies to both in-app nudges and closed-app reminders.</div>
+        <label style={{ marginTop: 0 }}>Lead time</label>
+        <div className="pills">
+          {LEADS.map((l) => (
+            <button key={l.min} className={`pill ${leadMin === l.min ? "on" : ""}`} onClick={() => chooseLead(l.min)}>{l.label}</button>
+          ))}
+        </div>
+        <label style={{ marginTop: 16 }}>Quiet hours (no reminders)</label>
+        <div className="row">
+          <input type="time" value={quietStart} onChange={(e) => changeQuiet(e.target.value, quietEnd)} style={{ flex: 1 }} aria-label="Quiet from" />
+          <span className="muted">to</span>
+          <input type="time" value={quietEnd} onChange={(e) => changeQuiet(quietStart, e.target.value)} style={{ flex: 1 }} aria-label="Quiet until" />
+          {(quietStart || quietEnd) && <button className="icon-btn danger" aria-label="Clear quiet hours" onClick={() => changeQuiet("", "")}>✕</button>}
+        </div>
+        <p className="small muted" style={{ marginBottom: 0 }}>Leave empty for none. Overnight windows (e.g. 22:00 → 07:00) are supported.</p>
       </div>
 
       <div className="card" style={{ marginTop: -2 }}>

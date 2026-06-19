@@ -12,8 +12,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC = join(__dirname, "..", "public");
 mkdirSync(PUBLIC, { recursive: true });
 
-const BG = [91, 141, 239]; // #5B8DEF
+const BG_A = [99, 102, 241]; // #6366f1 indigo (top-left)
+const BG_B = [139, 92, 246]; // #8b5cf6 violet (bottom-right)
 const FG = [255, 255, 255]; // white "C"
+
+const lerp = (a, b, t) => Math.round(a + (b - a) * t);
 
 function render(size) {
   const buf = Buffer.alloc(size * size * 4);
@@ -25,7 +28,9 @@ function render(size) {
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const i = (y * size + x) * 4;
-      let col = BG;
+      // Diagonal brand gradient background.
+      const t = (x + y) / (2 * (size - 1));
+      let col = [lerp(BG_A[0], BG_B[0], t), lerp(BG_A[1], BG_B[1], t), lerp(BG_A[2], BG_B[2], t)];
       const dx = x + 0.5 - c;
       const dy = y + 0.5 - c;
       const dist = Math.sqrt(dx * dx + dy * dy);

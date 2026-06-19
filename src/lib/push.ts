@@ -6,6 +6,7 @@
 
 import { getSettings, saveSettings } from "./model";
 import { WeekPlan, todayISO } from "./planner";
+import { inQuietHours, leadMinutes } from "./notify";
 
 export interface Reminder { id: string; at: number; title: string; body: string }
 
@@ -22,17 +23,22 @@ function urlBase64ToUint8Array(b64: string): Uint8Array {
   return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
 }
 
-/** Build future reminders for the visible week (skips done/skipped and past times). */
+/** Build future reminders for the visible week (skips done/skipped and past times).
+    Honors the configured lead time (fire N minutes early) and quiet hours. */
 export function buildReminders(week: WeekPlan): Reminder[] {
   const out: Reminder[] = [];
   const now = Date.now();
+  const lead = leadMinutes();
   for (const day of week.days) {
     for (const it of day.items) {
       if (it.outcome || it.startMin == null) continue;
-      const at = new Date(`${day.date}T00:00:00`).getTime() + it.startMin * 60000;
+      const fireMin = it.startMin - lead;
+      if (inQuietHours(((fireMin % 1440) + 1440) % 1440)) continue;
+      const at = new Date(`${day.date}T00:00:00`).getTime() + fireMin * 60000;
       if (at <= now) continue;
       const time = `${String(Math.floor(it.startMin / 60)).padStart(2, "0")}:${String(it.startMin % 60).padStart(2, "0")}`;
-      out.push({ id: `${day.date}:${it.id}`, at, title: it.title, body: `${time} · ${it.minutes} min` });
+      const body = lead > 0 ? `in ${lead < 60 ? `${lead} min` : `${lead / 60} hr`} · ${time}` : `${time} · ${it.minutes} min`;
+      out.push({ id: `${day.date}:${it.id}`, at, title: it.title, body });
     }
   }
   return out;

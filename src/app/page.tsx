@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DateTime } from "luxon";
 import { Sheet } from "@/components/Sheet";
+import { Logo } from "@/components/Logo";
 import { planWeek, setOutcome, reassign, todayISO, WeekPlan, PlanItem } from "@/lib/planner";
 import { addTask } from "@/lib/model";
 import { hasApiKey, parseCapture } from "@/lib/ai";
@@ -19,6 +20,7 @@ export default function WeekPage() {
 
   const dayEls = useRef(new Map<string, HTMLElement>());
   const rects = useRef<{ date: string; top: number; bottom: number }[]>([]);
+  const dragRef = useRef<{ item: PlanItem; from: string } | null>(null);
   const [drag, setDrag] = useState<{ item: PlanItem; from: string; y: number; over: string | null } | null>(null);
 
   const replan = useCallback(async () => {
@@ -57,28 +59,45 @@ export default function WeekPage() {
   async function move(item: PlanItem, toDate: string) { reassign(item.id, toDate); setSel(null); await replan(); }
 
   // ---- cross-day drag ----
-  function dragStart(e: React.PointerEvent, item: PlanItem, from: string) {
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  // Window-level pointer listeners (rather than capture on the tiny handle) so the
+  // drag keeps tracking through React re-renders and on touch devices.
+  const dragStart = useCallback((e: React.PointerEvent, item: PlanItem, from: string) => {
+    e.preventDefault();
+    dragRef.current = { item, from };
     rects.current = [...dayEls.current.entries()].map(([date, el]) => { const r = el.getBoundingClientRect(); return { date, top: r.top, bottom: r.bottom }; });
     setDrag({ item, from, y: e.clientY, over: from });
-  }
-  function dragMove(e: React.PointerEvent) {
-    if (!drag) return;
-    const hit = rects.current.find((r) => e.clientY >= r.top && e.clientY <= r.bottom);
-    setDrag({ ...drag, y: e.clientY, over: hit?.date ?? drag.over });
-  }
-  async function dragEnd() {
-    if (!drag) return;
-    const { item, from, over } = drag;
-    setDrag(null);
-    if (over && over !== from) { reassign(item.id, over); await replan(); }
-  }
+
+    const hitAt = (y: number) => rects.current.find((r) => y >= r.top && y <= r.bottom)?.date ?? null;
+    const onMove = (ev: PointerEvent) => {
+      ev.preventDefault();
+      const over = hitAt(ev.clientY);
+      setDrag((d) => (d ? { ...d, y: ev.clientY, over: over ?? d.over } : d));
+    };
+    const onUp = (ev: PointerEvent) => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      const cur = dragRef.current;
+      dragRef.current = null;
+      setDrag(null);
+      const over = hitAt(ev.clientY);
+      if (cur && over && over !== cur.from) { reassign(cur.item.id, over); void replan(); }
+    };
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  }, [replan]);
 
   if (!week) return <div className="empty"><div className="mark">◷</div><p>Planning your week…</p></div>;
 
   return (
     <>
-      <header className="lt"><div><h1>This week</h1><div className="sub">{progressLine(week)}</div></div></header>
+      <header className="lt">
+        <div className="brand">
+          <span className="brand-mark"><Logo size={34} /></span>
+          <div><h1>This week</h1><div className="sub">{progressLine(week)}</div></div>
+        </div>
+      </header>
 
       <div className="capture">
         <input value={text} placeholder="Add anything — I'll find a day…" onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && capture()} />
@@ -122,7 +141,7 @@ export default function WeekPage() {
                         <div className="item-title">{it.title}</div>
                         <div className="item-sub"><span className={`dot-src src-${it.source}`} />{itemSub(it)}</div>
                       </button>
-                      {draggable && <span className="handle" onPointerDown={(e) => dragStart(e, it, day.date)} onPointerMove={dragMove} onPointerUp={dragEnd} aria-label="Drag to another day">⠿</span>}
+                      {draggable && <span className="handle" onPointerDown={(e) => dragStart(e, it, day.date)} role="button" aria-label="Drag to another day">⠿</span>}
                     </div>
                   );
                 })}
