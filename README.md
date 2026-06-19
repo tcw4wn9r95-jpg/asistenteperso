@@ -17,6 +17,8 @@ PWA (GitHub Pages), on-device data, with Claude working *behind* the UI.
 - **Self-healing** — items have flex windows; miss a day and undone work **rolls forward**
   and rebalances, then shows a short "moved N forward" summary. One off day never derails.
 - **Momentum** — streaks grounded in the science of consistency over perfection.
+- **Reminders** — a live "Up next" + a notification at an item's time. Optionally
+  fire **even when the app is closed** via the free push service in `server-push/`.
 - **Coach Claudio** — your workouts appear on the right day (reads `training-ai`'s JSON).
 
 ## Architecture
@@ -28,6 +30,7 @@ PWA (GitHub Pages), on-device data, with Claude working *behind* the UI.
 | Planner | `src/lib/planner.ts` — week-level self-healing assignment + the pure intraday scheduler (`src/server/scheduling`) |
 | AI | Claude direct from the browser with your key (`src/lib/ai.ts`) — capture, chores, goal steps |
 | Integrations | `src/server/integrations` reads Coach Claudio's committed JSON |
+| Closed-app push | Optional Cloudflare Worker (`server-push/`) — KV + per-minute cron sends Web Push; see its README |
 
 ## Run locally
 

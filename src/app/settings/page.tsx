@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { DayWindow, getAvailability, getSettings, saveAvailability, saveSettings, DEFAULT_MODEL } from "@/lib/model";
 import { ping } from "@/lib/ai";
 import { requestNotificationPermission } from "@/lib/nudges";
+import { disablePush, enablePush, testPush } from "@/lib/push";
+import { planWeek } from "@/lib/planner";
 
 export default function SettingsPage() {
   const [key, setKey] = useState("");
@@ -15,15 +17,40 @@ export default function SettingsPage() {
   const [savedHours, setSavedHours] = useState(false);
   const [reminders, setReminders] = useState(false);
   const [remNote, setRemNote] = useState("");
+  const [pushUrl, setPushUrl] = useState("");
+  const [push, setPush] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushNote, setPushNote] = useState("");
 
   useEffect(() => {
     const s = getSettings();
     setKey(s.anthropicKey ?? "");
     setModel(s.model ?? DEFAULT_MODEL);
     setReminders(Boolean(s.remindersEnabled));
+    setPushUrl(s.pushUrl ?? "");
+    setPush(Boolean(s.pushEnabled));
     const a = getAvailability();
     setWeekday(a.weekday); setWeekend(a.weekend);
   }, []);
+
+  async function togglePush(on: boolean) {
+    if (!on) { await disablePush(); setPush(false); setPushNote(""); return; }
+    if (!pushUrl.trim()) { setPushNote("Add the reminder service URL first."); return; }
+    saveSettings({ pushUrl: pushUrl.trim() });
+    setPushBusy(true); setPushNote("Subscribing…");
+    try {
+      const week = await planWeek();
+      await enablePush(week);
+      setPush(true); setPushNote("✓ On. Reminders will arrive even when the app is closed.");
+    } catch (e) { setPush(false); setPushNote(`✗ ${e instanceof Error ? e.message : "Failed"}`); }
+    finally { setPushBusy(false); }
+  }
+  async function doTestPush() {
+    setPushBusy(true); setPushNote("Sending a test…");
+    try { await testPush(); setPushNote("Sent — it should appear shortly."); }
+    catch (e) { setPushNote(`✗ ${e instanceof Error ? e.message : "Failed"}`); }
+    finally { setPushBusy(false); }
+  }
 
   async function toggleReminders(on: boolean) {
     if (on) {
@@ -70,6 +97,19 @@ export default function SettingsPage() {
           <input type="checkbox" className="switch" checked={reminders} onChange={(e) => toggleReminders(e.target.checked)} />
         </div>
         {remNote && <p className="small" style={{ marginTop: 10 }}>{remNote}</p>}
+      </div>
+
+      <div className="card" style={{ marginTop: -2 }}>
+        <div style={{ fontWeight: 600 }}>…even when the app is closed</div>
+        <p className="small muted" style={{ marginTop: 4 }}>Connect the free reminder service (one-time setup — see <code>server-push/README.md</code>) and paste its URL below. On iPhone, first add Claudio to your Home Screen.</p>
+        <label>Reminder service URL</label>
+        <input value={pushUrl} placeholder="https://claudio-push.<you>.workers.dev" onChange={(e) => setPushUrl(e.target.value)} onBlur={() => saveSettings({ pushUrl: pushUrl.trim() || undefined })} autoComplete="off" />
+        <div className="row" style={{ marginTop: 14 }}>
+          <div style={{ flex: 1 }}><div style={{ fontWeight: 600 }}>Closed-app reminders</div><div className="small muted">{push ? "On" : "Off"}</div></div>
+          {pushBusy ? <span className="small muted">working…</span> : <input type="checkbox" className="switch" checked={push} onChange={(e) => togglePush(e.target.checked)} />}
+        </div>
+        {push && <button className="btn grey sm" style={{ marginTop: 12 }} onClick={doTestPush} disabled={pushBusy}>Send test notification</button>}
+        {pushNote && <p className="small" style={{ marginTop: 10 }}>{pushNote}</p>}
       </div>
 
       <div className="section-label">Claudio AI</div>

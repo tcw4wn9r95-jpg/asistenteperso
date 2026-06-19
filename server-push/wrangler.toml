@@ -1,0 +1,21 @@
+name = "claudio-push"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Per-minute cron sends any reminders that have just come due.
+[triggers]
+crons = ["* * * * *"]
+
+# KV store of { subscription, reminders }. Create with:
+#   npx wrangler kv namespace create SUBS
+# then paste the printed id below.
+[[kv_namespaces]]
+binding = "SUBS"
+id = "REPLACE_WITH_YOUR_KV_ID"
+
+[vars]
+# Public VAPID key (safe to expose) + a contact mailto. The PRIVATE key is set as
+# a secret, not here:  npx wrangler secret put VAPID_PRIVATE_KEY
+VAPID_PUBLIC_KEY = "REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY"
+VAPID_SUBJECT = "mailto:you@example.com"

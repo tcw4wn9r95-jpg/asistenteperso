@@ -35,3 +35,8 @@ next-env.d.ts
 
 # vitest / coverage
 /coverage
+
+# push worker
+server-push/node_modules
+server-push/.wrangler
+server-push/package-lock.json

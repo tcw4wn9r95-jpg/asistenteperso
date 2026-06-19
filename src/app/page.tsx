@@ -7,6 +7,7 @@ import { planWeek, setOutcome, reassign, todayISO, WeekPlan, PlanItem } from "@/
 import { addTask } from "@/lib/model";
 import { hasApiKey, parseCapture } from "@/lib/ai";
 import { fireDueNudges, nextUp, NextUp } from "@/lib/nudges";
+import { syncSchedule } from "@/lib/push";
 
 export default function WeekPage() {
   const [week, setWeek] = useState<WeekPlan | null>(null);
@@ -24,6 +25,7 @@ export default function WeekPage() {
     const w = await planWeek();
     setWeek(w);
     setUp(nextUp(w));
+    void syncSchedule(w); // keep the closed-app reminder service in sync
   }, []);
   useEffect(() => { replan(); }, [replan]);
 
