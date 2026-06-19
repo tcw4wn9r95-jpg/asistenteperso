@@ -3,6 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Serve at https://claudio-push.<account>.workers.dev (the URL the app connects to).
+# Preview URLs aren't needed for this single-purpose worker.
+workers_dev = true
+preview_urls = false
+
 # Per-minute cron sends any reminders that have just come due.
 [triggers]
 crons = ["* * * * *"]
