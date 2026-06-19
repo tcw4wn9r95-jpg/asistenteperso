@@ -14,7 +14,7 @@ name: Deploy push worker
 
 on:
   push:
-    branches: [main]
+    branches: [main, claude/personal-time-assistant-bczvfg]
     paths:
       - "server-push/**"
       - ".github/workflows/deploy-push-worker.yml"
