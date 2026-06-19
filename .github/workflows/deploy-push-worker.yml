@@ -1,0 +1,45 @@
+name: Deploy push worker
+
+# Deploys the Claudio reminder service (server-push/) to Cloudflare Workers.
+# Runs whenever the worker changes on main, or on demand.
+#
+# One-time setup (the worker can't deploy without these — see server-push/README.md):
+#   1. Create the KV namespace and paste its id into server-push/wrangler.toml:
+#        cd server-push && npx wrangler kv namespace create SUBS
+#   2. Add these repository secrets (Settings → Secrets and variables → Actions):
+#        CLOUDFLARE_API_TOKEN   — token with the "Edit Cloudflare Workers" template
+#        CLOUDFLARE_ACCOUNT_ID  — your Cloudflare account id
+#        VAPID_PRIVATE_KEY      — the privateKey from `npm run vapid`
+#   The public VAPID key + subject already live in wrangler.toml ([vars]).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "server-push/**"
+      - ".github/workflows/deploy-push-worker.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server-push
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: server-push
+          # Push the private key as a Worker secret on every deploy.
+          secrets: |
+            VAPID_PRIVATE_KEY
+        env:
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
