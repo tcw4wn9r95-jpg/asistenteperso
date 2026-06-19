@@ -59,7 +59,18 @@ export type Outcome = "DONE" | "SKIPPED";
 export interface Streak { current: number; longest: number; last: string | null }
 
 export interface State {
-  settings: { anthropicKey?: string; model?: string; remindersEnabled?: boolean; pushUrl?: string; pushEnabled?: boolean };
+  settings: {
+    anthropicKey?: string;
+    model?: string;
+    remindersEnabled?: boolean;
+    pushUrl?: string;
+    pushEnabled?: boolean;
+    // How notifications fire. leadMin = minutes before an item's start (0 = at the time).
+    notifyLeadMin?: number;
+    // Quiet hours: suppress notifications outside this window ("HH:MM", optional).
+    quietStart?: string;
+    quietEnd?: string;
+  };
   availability: { weekday: DayWindow[]; weekend: DayWindow[] };
   chores: Chore[];
   goals: Goal[];

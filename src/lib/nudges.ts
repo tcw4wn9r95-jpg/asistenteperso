@@ -6,6 +6,7 @@
 import { DateTime } from "luxon";
 import { getSettings } from "./model";
 import { PlanItem, WeekPlan, todayISO } from "./planner";
+import { inQuietHours, leadMinutes } from "./notify";
 
 const NOTIFIED_KEY = "claudio-notified";
 
@@ -60,13 +61,16 @@ export function fireDueNudges(week: WeekPlan): void {
   const day = week.days.find((d) => d.date === todayISO());
   if (!day) return;
   const now = nowMinutes();
+  const lead = leadMinutes();
   const done = notifiedToday();
   let changed = false;
   for (const it of day.items) {
     if (it.outcome || it.startMin == null || done.has(it.id)) continue;
-    // Within the last ~2 minutes of its start time → it's time.
-    if (now >= it.startMin && now - it.startMin <= 2) {
-      void show(it.title, `${fmt(it.startMin)} · ${it.minutes} min`);
+    const fireAt = it.startMin - lead;
+    // Within the last ~2 minutes of the (lead-adjusted) fire time → it's time.
+    if (now >= fireAt && now - fireAt <= 2 && !inQuietHours(now)) {
+      const body = lead > 0 ? `in ${lead < 60 ? `${lead} min` : `${lead / 60} hr`} · ${fmt(it.startMin)}` : `${fmt(it.startMin)} · ${it.minutes} min`;
+      void show(it.title, body);
       done.add(it.id);
       changed = true;
     }

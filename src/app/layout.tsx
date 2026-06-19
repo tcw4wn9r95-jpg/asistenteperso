@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { TabBar } from "@/components/TabBar";
 import { ServiceWorker } from "@/components/ServiceWorker";
+import { Splash } from "@/components/Splash";
 
 export const metadata: Metadata = {
   title: "Claudio",
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f2f2f7",
+  themeColor: "#eef0f6",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
+        <Splash />
         <main className="app-shell">{children}</main>
         <TabBar />
         <ServiceWorker />
