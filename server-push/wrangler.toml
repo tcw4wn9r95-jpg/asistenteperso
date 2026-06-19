@@ -12,10 +12,10 @@ crons = ["* * * * *"]
 # then paste the printed id below.
 [[kv_namespaces]]
 binding = "SUBS"
-id = "REPLACE_WITH_YOUR_KV_ID"
+id = "9867c65893864a33ac11ad7697c076b4"
 
 [vars]
 # Public VAPID key (safe to expose) + a contact mailto. The PRIVATE key is set as
 # a secret, not here:  npx wrangler secret put VAPID_PRIVATE_KEY
-VAPID_PUBLIC_KEY = "BDhlN0sWGiUf6wiA_QqrpnhuHfIdu57Yh03jeZtGrbQcI0WyE2kb86cdH-GERLRTKDyYWhOsmmckKZ0T9AXDfIM"
+VAPID_PUBLIC_KEY = "BFgkyeP8IJPCsRf9k8DSU2ywt-eCSQfHZzbtQx_gMsBN4g-STs34Mf1khgVhnnMJZbNwSoiyQ0Ilk85wJd9Rw4Q"
 VAPID_SUBJECT = "mailto:dcasares.silva@gmail.com"
