@@ -8,9 +8,12 @@ compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 preview_urls = false
 
-# Per-minute cron sends any reminders that have just come due.
+# Cron runs every 5 minutes (288/day) to stay comfortably inside the Cloudflare
+# free tier — a per-minute cron exceeds the free KV "list" quota (1,000/day).
+# Reminders fire within ~5 min of their time (the worker's catch window covers
+# the gap); set a lead time in the app if you want them earlier.
 [triggers]
-crons = ["* * * * *"]
+crons = ["*/5 * * * *"]
 
 # KV store of { subscription, reminders }. Create with:
 #   npx wrangler kv namespace create SUBS

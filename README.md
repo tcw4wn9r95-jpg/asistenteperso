@@ -30,7 +30,7 @@ PWA (GitHub Pages), on-device data, with Claude working *behind* the UI.
 | Planner | `src/lib/planner.ts` — week-level self-healing assignment + the pure intraday scheduler (`src/server/scheduling`) |
 | AI | Claude direct from the browser with your key (`src/lib/ai.ts`) — capture, chores, goal steps |
 | Integrations | `src/server/integrations` reads Coach Claudio's committed JSON |
-| Closed-app push | Optional Cloudflare Worker (`server-push/`) — KV + per-minute cron sends Web Push; see its README |
+| Closed-app push | Optional Cloudflare Worker (`server-push/`) — KV + 5-min cron sends Web Push; see its README |
 
 ## Run locally
 
