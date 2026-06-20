@@ -1,7 +1,7 @@
 // Claudio reminder service — a tiny Cloudflare Worker so reminders fire even when
 // the app is closed. It holds each device's push subscription + the next 7 days of
 // reminder times (uploaded by the app whenever the plan changes) in KV, and a
-// per-minute cron sends due notifications via Web Push. It never sees the user's
+// 5-minute cron sends due notifications via Web Push. It never sees the user's
 // data — only "send this title at this timestamp".
 
 import { buildPushPayload } from "@block65/webcrypto-web-push";
@@ -85,8 +85,10 @@ export default {
         const sent = new Set(rec.sent ?? []);
         let dead = false, changed = false;
         for (const r of rec.reminders ?? []) {
-          // Fire reminders whose time arrived in the last 5 minutes, once each.
-          if (r.at <= now && now - r.at <= 5 * 60 * 1000 && !sent.has(r.id)) {
+          // Fire reminders whose time arrived in the last ~10 minutes, once each.
+          // The window must exceed the 5-minute cron interval (with slack for a
+          // skipped tick) so nothing is missed; `sent` prevents double-sends.
+          if (r.at <= now && now - r.at <= 10 * 60 * 1000 && !sent.has(r.id)) {
             const result = await send(env, rec.subscription, { title: r.title, body: r.body, tag: r.id, url: "/" });
             if (result === "gone") { dead = true; break; }
             if (result === "ok") { sent.add(r.id); changed = true; }

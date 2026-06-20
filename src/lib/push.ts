@@ -1,6 +1,6 @@
 // Closed-app reminders via Web Push. The browser subscribes (VAPID), then uploads
 // its subscription plus the next 7 days of reminder times to the backend (a tiny
-// Cloudflare Worker). A per-minute cron there sends the notification on time —
+// Cloudflare Worker). A 5-minute cron there sends the notification on time —
 // even when the app is closed. The schedule is re-uploaded whenever the plan
 // changes, so the backend never needs to know anything about the user's data.
 
@@ -58,11 +58,13 @@ export async function enablePush(week: WeekPlan): Promise<void> {
   if (Notification.permission !== "granted" && (await Notification.requestPermission()) !== "granted") throw new Error("Notifications are blocked for this site.");
   const sub = await getSubscription();
   await sync(week, sub);
+  if (typeof localStorage !== "undefined") localStorage.setItem(SIG_KEY, reminderSig(week));
   saveSettings({ pushEnabled: true });
 }
 
 export async function disablePush(): Promise<void> {
   saveSettings({ pushEnabled: false });
+  if (typeof localStorage !== "undefined") localStorage.removeItem(SIG_KEY);
   try {
     const reg = await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.getSubscription();
@@ -81,13 +83,22 @@ async function sync(week: WeekPlan, sub: PushSubscription): Promise<void> {
   });
 }
 
-/** Re-upload the latest schedule (called after the plan changes). Silent on failure. */
+const SIG_KEY = "claudio-push-sig";
+function reminderSig(week: WeekPlan): string {
+  return buildReminders(week).map((r) => `${r.id}@${r.at}`).join("|");
+}
+
+/** Re-upload the latest schedule (called after the plan changes). Silent on failure.
+    Skips the upload entirely when the reminder set is unchanged, so we don't burn
+    a KV write on every page load / drag (keeps us inside the Cloudflare free tier). */
 export async function syncSchedule(week: WeekPlan): Promise<void> {
   if (!pushEnabled()) return;
+  const sig = reminderSig(week);
+  if (typeof localStorage !== "undefined" && localStorage.getItem(SIG_KEY) === sig) return;
   try {
     const reg = await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.getSubscription();
-    if (sub) await sync(week, sub);
+    if (sub) { await sync(week, sub); localStorage.setItem(SIG_KEY, sig); }
   } catch { /* offline — will resync next change */ }
 }
 

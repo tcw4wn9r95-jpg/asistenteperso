@@ -2,15 +2,17 @@
 
 A tiny [Cloudflare Worker](https://workers.cloudflare.com) — free tier — that makes
 reminders fire **even when the app is closed**. It stores each device's push
-subscription plus the next 7 days of reminder times in KV, and a **per-minute cron**
-sends each notification when its time arrives.
+subscription plus the next 7 days of reminder times in KV, and a **5-minute cron**
+sends each notification when its time arrives (every-5-min keeps it inside the
+Cloudflare free tier; reminders land within ~5 min — set a lead time in the app
+if you want them earlier).
 
 It’s privacy-light by design: it only ever holds `{ title, body, at }` rows the app
 uploads — never your goals, chores, notes, or API key.
 
 ```
 app (GitHub Pages)  ──POST /sync {subscription, reminders}──▶  Worker + KV
-        ▲                                                         │ cron every minute
+        ▲                                                         │ cron every 5 min
         └────────────────  Web Push (closed app)  ◀──────────────┘
 ```
 
