@@ -2,7 +2,7 @@
 
 **Público:** profesionales de producción / manufactura (España)
 **Base:** presentación "1.3 Planificación Estratégica HK V21" (28 diapositivas) + Lean Six Sigma
-**Duración:** 2 h 30 min · **Formato:** 4 mini-clases cortas + **3 breakouts de trabajo** (60 min en total, 40 % de la sesión)
+**Duración:** 2 h 30 min · **Formato:** 4 mini-clases (65 min de explicación) + **3 breakouts de trabajo** (10 + 15 + 15 = 40 min en total)
 **Caso único del día:** **Tesla – Gigafactory Berlín-Brandenburg (Grünheide)**, fabricación del Model Y, una planta europea que los participantes conocen y cuyo contexto (automoción, cliente final, costes, calidad) les resulta cercano.
 
 > **Aviso para decir en voz alta:** usamos Tesla como caso didáctico con información pública general. **No son datos internos ni cifras reales de Tesla.** Todos los números del ejercicio son **supuestos de clase** para practicar el método. Eso evita debates sobre "si el dato real es otro".
@@ -14,19 +14,21 @@
 | Min | Bloque | Duración | Diapositivas |
 |---|---|---|---|
 | 0–10 | Apertura y presentación del caso Tesla | 10 | 1 |
-| 10–30 | **Mini-clase 1:** por qué fallan los planes, qué es Hoshin Kanri, ritmo de revisión | 20 | 2–12 |
-| 30–40 | **Mini-clase 2:** filosofía y directrices | 10 | 13–19 |
-| 40–60 | 🎯 **BREAKOUT 1:** Filosofía, directrices y objetivos | 20 | |
+| 10–35 | **Mini-clase 1:** por qué fallan los planes, qué es Hoshin Kanri, ritmo de revisión | 25 | 2–12 |
+| 35–50 | **Mini-clase 2:** filosofía y directrices | 15 | 13–19 |
+| 50–60 | 🎯 **BREAKOUT 1:** Directrices y objetivos | **10** | |
 | 60–65 | Plenario 1 (catchball) | 5 | |
 | 65–75 | ☕ Pausa | 10 | |
-| 75–85 | **Mini-clase 3:** estrategias y DAFO | 10 | 20–22 |
-| 85–105 | 🎯 **BREAKOUT 2:** Estrategias y proyectos | 20 | |
+| 75–90 | **Mini-clase 3:** estrategias y DAFO | 15 | 20–22 |
+| 90–105 | 🎯 **BREAKOUT 2:** Estrategias y proyectos | **15** | |
 | 105–110 | Plenario 2 (catchball) | 5 | |
-| 110–120 | **Mini-clase 4:** indicadores, Box Score y tácticas | 10 | 23–28 |
-| 120–140 | 🎯 **BREAKOUT 3:** Box Score y plan de una hoja | 20 | |
+| 110–125 | **Mini-clase 4:** indicadores, Box Score y tácticas | 15 | 23–28 |
+| 125–140 | 🎯 **BREAKOUT 3:** Box Score y plan de una hoja | **15** | |
 | 140–150 | Plenario final y cierre | 10 | |
 
-**Regla de oro de la facilitación:** las mini-clases **no pasan de 10 minutos de explicación seguida** (la excepción es la primera, 20). Si te pasas, recorta ejemplos, nunca el tiempo de breakout.
+**Reparto:** 65 min de explicación (la presentación completa), 40 min de breakouts, 15 min de plenarios, 10 de pausa y 20 de apertura y cierre.
+
+**Regla de oro de la facilitación:** dentro de cada mini-clase, **no pases de 5–6 minutos seguidos sin una pregunta o un ejemplo Tesla** para mantener la atención. Si te pasas de tiempo, recorta ejemplos, nunca el tiempo de breakout. Los breakouts son cortos, así que **se trabaja con plantillas y con el listón bajo**: lo importante es que cada grupo llegue al entregable, no que sea perfecto.
 
 ---
 
@@ -58,7 +60,7 @@ Todos construyen un plan **completo** (las 4 perspectivas), pero orientado a su 
 ## 3. Apertura y presentación del caso (Diapositiva 1) · 10 min
 
 **Qué decir:**
-"Hoy no vamos a hablar de teoría en abstracto. Vamos a **construir, en dos horas y media, un plan estratégico de una hoja para una planta real que todos conocéis: Tesla Giga Berlín**. Trabajaremos en tres grupos. Yo explico un concepto durante 10 minutos, y ustedes lo aplican durante 20 minutos al caso. Al final de la sesión cada grupo se lleva su plan terminado."
+"Hoy no vamos a hablar de teoría en abstracto. Vamos a **construir, en dos horas y media, un plan estratégico de una hoja para una planta real que todos conocéis: Tesla Giga Berlín**. Trabajaremos en tres grupos. Yo explico un bloque de la presentación y enseguida ustedes lo aplican al caso en un trabajo en grupo corto, de 10 a 15 minutos. Al final de la sesión cada grupo se lleva su plan terminado."
 
 **Los tres objetivos (diapositiva 1):** conocer los elementos clave de la planificación estratégica, entender el modelo Hoshin Kanri e **iniciar** el proceso de planificación. "Hoy lo vamos a *iniciar y dejar en papel*."
 
@@ -74,17 +76,17 @@ Todos construyen un plan **completo** (las 4 perspectivas), pero orientado a su 
 
 ---
 
-## 4. Mini-clase 1 (Diapositivas 2–12) · 20 min
+## 4. Mini-clase 1 (Diapositivas 2–12) · 25 min
 
 > **Tesla en una frase para cada idea.** Cada concepto se ilustra con un ejemplo de 30 segundos, no más.
 
-### Diap. 2–3 · Por qué fallan los planes y síntomas (5 min)
+### Diap. 2–3 · Por qué fallan los planes y síntomas (6 min)
 - "Solo entre el 10 % y el 20 % de las empresas ejecutan bien su planificación (cifra de la fuente que cita el curso, Harvard Business School). Y el 91 % de los directivos se cree excepcional tomando decisiones: las cuentas no salen."
 - **Ejemplo Tesla:** "En 2018, Tesla tenía la estrategia clara (producir el Model 3 en volumen) pero la ejecución en planta se atascó: automatización excesiva, cuellos de botella, instalaciones improvisadas. **Muy buena estrategia, ejecución sin sistema.**"
 - Los 3 síntomas (diapositiva 3), con un ejemplo de fábrica genérico: (1) mejora continua desconectada de la estrategia; (2) demasiados proyectos a la vez (WIP de proyectos); (3) planes que cambian cada año.
 - **Pregunta rápida:** "¿Cuál de los tres es el que más sufrís? 1, 2 o 3" (mano alzada).
 
-### Diap. 4–6 · Qué es estrategia y despliegue (5 min)
+### Diap. 4–6 · Qué es estrategia y despliegue (6 min)
 - Estrategia: *strato* (grupo de personas) + *agein* (guiar). "Decidir dónde ponemos recursos limitados y qué dejamos fuera."
 - **Cascada (diap. 5–6):** Directriz (QUÉ) → Estrategia (CÓMO) → Proyecto → Actividad. Lo que es *cómo* arriba es *qué* abajo.
 
@@ -97,15 +99,16 @@ Todos construyen un plan **completo** (las 4 perspectivas), pero orientado a su 
 | Proyecto | Reducir el retrabajo en la línea de pintura |
 | Actividad | Estudiar los defectos de pintura de las últimas 4 semanas y estandarizar el ajuste de la pistola |
 
-### Diap. 7–10 · Qué es Hoshin Kanri (5 min)
+### Diap. 7–10 · Qué es Hoshin Kanri (7 min)
 - **4 preguntas** (diap. 7): ¿De qué se trata? (visión y áreas clave) · ¿Cómo mediremos? (indicadores) · ¿Qué vamos a hacer? (estrategias y proyectos) · ¿Cómo nos comportaremos? (valores).
 - **Significado (diap. 8):** *ho* = dirección, *shin* = aguja (brújula); *kan* = control, *ri* = lógica. "Orientar la brújula y vigilar que no nos desviemos."
 - **Modelo (diap. 9):** directrices, estrategias, proyectos, indicadores, recursos: **un plan en una sola hoja** (parecido a un A3).
 - **Catchball (diap. 10):** "Se lanza la meta, el equipo la devuelve con lo que es realista, y se repite hasta que sea de todos."
   - **Ejemplo Tesla:** "Si la dirección dice 'subimos 20 % la producción diaria', el jefe de pintura devuelve: 'con el tiempo de cambio de color actual no llegamos; con 3 mejoras, sí'. Eso es catchball."
 
-### Diap. 11–12 · Beneficios y ritmo de revisión (5 min)
+### Diap. 11–12 · Beneficios y ritmo de revisión (6 min)
 - **Beneficios (diap. 11):** foco en pocos objetivos vitales, alineación directiva, liderazgo visible, participación, comunicación de metas.
+  - **Pregunta al grupo (1 min):** "De los cinco beneficios, ¿cuál sería el más difícil de conseguir en una planta como la de Tesla, y por qué?"
 - **Ritmo (diap. 12):**
 
 | Frecuencia | Qué se revisa | Duración |
@@ -120,20 +123,27 @@ Todos construyen un plan **completo** (las 4 perspectivas), pero orientado a su 
 
 ---
 
-## 5. Mini-clase 2 (Diapositivas 13–19) · 10 min
+## 5. Mini-clase 2 (Diapositivas 13–19) · 15 min
 
-### Paso 1 · Filosofía: visión, misión, valores (diap. 13–16) · 4 min
+> Antes del Breakout 1 hay que dar **todo** lo necesario para que el grupo trabaje solo durante 10 minutos. Por eso esta mini-clase es más completa: termina siempre mostrando el ejemplo de referencia de la tabla final.
+
+### Paso 1 · Filosofía: visión, misión, valores (diap. 13–16) · 5 min
 - Visión = *qué queremos llegar a ser*. Misión = *por qué existimos*. Valores = *cómo nos comportamos*.
 - Ejemplos de la diapositiva 15 (Disney, Google, Nike…): "cortas, concretas, se entienden en 10 segundos".
 - **Ejemplo Tesla:** misión pública: *"Acelerar la transición del mundo hacia la energía sostenible."* Para la planta, la traducimos a una **misión de planta**: *"Fabricar en Berlín coches seguros y de calidad, a un coste que haga la movilidad eléctrica accesible."*
+  - **Esta misión se les entrega ya escrita** (el Breakout 1 es corto): ponla en pantalla y no la discutan. **Valores:** menciónalos en 30 segundos (seguridad, calidad en origen, respeto a las personas, mejora continua) y déjalos como lectura.
+  - **Errores típicos de misión/visión:** frases genéricas ("ser los mejores"), imposibles de medir, escritas lejos de la planta.
 
-### Paso 2 · Directrices, los QUÉ (diap. 17–18) · 3 min
+### Paso 2 · Directrices, los QUÉ (diap. 17–18) · 5 min
 - Cuatro perspectivas del curso: **Financiero, Comercial (cliente), Procesos, Conocimiento (personas).**
 - **Modelo DuPont (nota de la diap. 18), versión rápida:**
   *ROI = (Beneficio / Ventas) × (Ventas / Activos)*. "Solo dos palancas: **ganar más por coche** (menos defectos, menos coste) o **vender más con los mismos activos** (más coches por día con la misma línea)."
 - **Ejemplo Tesla:** "Una gigafactoría tiene activos enormes. Sacarles más coches al día (rotación) o menos coste por coche (margen) son las dos formas de mejorar. Todo proyecto Lean o Six Sigma cae en una de las dos."
 
-### Indicadores y objetivos (diap. 19) · 3 min
+- **Cómo se escribe una buena directriz (para el breakout):** verbo + qué + cuánto + para cuándo. Mal: "mejorar la calidad". Bien: "reducir a la mitad los defectos por coche en entrega en 12 meses".
+- **Directrices ≠ estrategias:** "instalar un robot" es un *cómo* (estrategia o proyecto), no un *qué*.
+
+### Indicadores y objetivos (diap. 19) · 5 min
 - Cada directriz lleva 1–2 indicadores con objetivo, que se revisan mensualmente en el **Balanced Scorecard**.
 - Criterio SMART: específico, medible, alcanzable, relevante, con plazo.
 - **Conexión Six Sigma:** "Un indicador estratégico es un **Big Y**; los proyectos DMAIC atacan las X que lo mueven."
@@ -149,49 +159,53 @@ Todos construyen un plan **completo** (las 4 perspectivas), pero orientado a su 
 
 ---
 
-## 6. 🎯 BREAKOUT 1 — Filosofía, directrices y objetivos · 20 min
+## 6. 🎯 BREAKOUT 1 — Directrices y objetivos · 10 min
 
 ### Objetivo (una frase)
-**"Dejar escritos la misión de la planta, 3 directrices con su indicador y una meta numérica a 12 meses para cada uno."**
+**"Escribir 3 directrices para la planta, cada una con un indicador y una meta numérica a 12 meses."**
 
 ### Entregable
-Plantilla 1 completada (Anexo A.1): **1 misión (1 frase) + 4 valores + 3 directrices (con la perspectiva a la que pertenecen) + 1 indicador y 1 meta por directriz.**
+Plantilla 1 (Anexo A.1): **3 directrices (verbo + qué + cuánto + cuándo), cada una con 1 indicador y 1 meta.** La misión ya viene dada y los valores quedan fuera (lectura).
+
+### Datos de partida (se entregan en la plantilla, supuestos de clase)
+Coste por coche: índice 100 · Defectos por coche en entrega: 1,0 · Coches por día: índice 100 · Incidentes con baja: índice 10 · Rotación anual de personal: 20 %. Así nadie pierde tiempo inventando la línea base.
 
 ### Cronograma del breakout
 | Min | Qué hace el grupo |
 |---|---|
-| 0–2 | Elegir portavoz y secretario; releer el mandato del grupo |
-| 2–7 | Escribir **misión y 4 valores** de la planta (alineados al mandato) |
-| 7–15 | Definir **3 directrices** (al menos 1 financiera y 1 de cliente) y **un indicador con meta** para cada una |
-| 15–18 | Verificar: ¿cabe en una página?, ¿es medible?, ¿se entiende en 30 segundos? |
-| 18–20 | Preparar 1 minuto de exposición |
+| 0–1 | Elegir portavoz y secretario; releer el mandato del grupo |
+| 1–8 | Definir **3 directrices** (al menos 1 de ellas ligada al mandato del grupo) y **un indicador con meta** para cada una usando los datos de partida |
+| 8–10 | Verificar con el checklist y elegir **la directriz principal** que presentará el portavoz (45 s) |
 
 ### Criterios de éxito (checklist del facilitador)
-- ☐ La misión cabe en una sola frase y se entiende sin explicación.
 - ☐ Hay exactamente **3** directrices (no 8).
-- ☐ Cada directriz tiene **un indicador con número y plazo.**
-- ☐ El mandato del grupo se refleja claramente (p. ej., Grupo 1 tiene una directriz de calidad).
+- ☐ Cada directriz tiene **indicador, número y plazo.**
+- ☐ Al menos una refleja claramente el mandato del grupo (p. ej., Grupo 1 tiene una directriz de calidad).
 
 ### Errores típicos y cómo intervenir
 - *Directrices vagas* ("mejorar la calidad") → pregunta: **"¿cuánto y para cuándo?"**
 - *Demasiadas directrices* → "si todo es prioritario, nada lo es; quedaos con tres."
 - *Mezclar QUÉ con CÓMO* ("instalar un robot") → "eso es una estrategia, no una directriz."
+- *Quedarse atascado:* "Poned un número aunque sea aproximado; el catchball lo corrige."
 
 ### Plenario 1 · Catchball (5 min)
 Cada portavoz presenta **su directriz principal en 45 segundos.** Otro grupo (rotación 1→2→3→1) responde con una pregunta o un ajuste (**"devuelve la pelota"**): *"¿Vuestra meta de calidad choca con la meta de productividad del Grupo 2?"* Eso es precisamente lo que hace el catchball: descubrir conflictos entre prioridades **antes** de ejecutar.
 
 ---
 
-## 7. Mini-clase 3 (Diapositivas 20–22) · 10 min
+## 7. Mini-clase 3 (Diapositivas 20–22) · 15 min
 
-### Estrategias, los CÓMO (diap. 20–21)
+### Estrategias, los CÓMO (diap. 20–21) · 6 min
 "Las estrategias son las acciones de mediano plazo que nos llevan a la directriz. **Una directriz, 1–2 estrategias.**"
 
 **Ejemplo Tesla (supuestos):**
 - Directriz: *Mejorar el margen de la planta* → Estrategias: (1) reducir el coste de retrabajo y chatarra; (2) aumentar el volumen diario sin ampliar la línea.
 - Directriz: *Cliente satisfecho con la calidad* → Estrategia: (1) detectar defectos en el proceso y no al final de la línea.
+- **Regla práctica:** cada estrategia empieza con un **verbo**, cuelga de **una** directriz y es lo bastante concreta como para derivar en 1–2 proyectos.
+- **Conexión Lean:** "detectar el defecto donde se produce" es *jidoka*; "subir volumen sin ampliar la línea" es atacar desperdicios (tiempos de cambio, paradas, esperas). Los proyectos del Breakout 2 saldrán de aquí.
+- **Pregunta (1 min):** "Si la directriz es 'reducir a la mitad los defectos por coche', ¿qué estrategia propondríais?" Recoge 2 respuestas y corrígelas con la regla del verbo.
 
-### Matriz DAFO/FODA (diap. 22)
+### Matriz DAFO/FODA (diap. 22) · 9 min
 (En España se dice **DAFO**; la diapositiva dice FODA.) Cuatro cuadrantes y **cruces**: FO, DO, FA, DA.
 
 **Ejemplo Tesla Giga Berlín (visión pública, simplificada):**
@@ -204,23 +218,27 @@ Cada portavoz presenta **su directriz principal en 45 segundos.** Otro grupo (ro
 
 **Mensaje:** "El DAFO no es un ejercicio de rellenar casillas: lo que importa son **los cruces**, que son las estrategias."
 
+**Cómo leer los cruces (2 min, con la tabla en pantalla):** FO = *atacar* (usar lo que somos buenos para aprovechar el mercado); DO = *mejorar* (corregir una debilidad aprovechando una oportunidad); FA = *defender* (usar fortalezas contra amenazas); DA = *proteger* (minimizar debilidades y evitar riesgos).
+
+**Instrucciones previas al Breakout 2 (2 min):** reparte plantilla A.2; recuerda **máx. 2 puntos por casilla**, solo 15 minutos, y que las 3 estrategias deben colgar de las 3 directrices del Breakout 1.
+
 ---
 
-## 8. 🎯 BREAKOUT 2 — Estrategias y proyectos · 20 min
+## 8. 🎯 BREAKOUT 2 — Estrategias y proyectos · 15 min
 
 ### Objetivo (una frase)
 **"Convertir cada directriz en una estrategia y cada estrategia en un proyecto concreto con responsable, plazo y método Lean/Six Sigma."**
 
 ### Entregable
-Plantilla 2 (Anexo A.2): **mini-DAFO (3 puntos por cuadrante) + 3 estrategias (una por directriz) + 3 proyectos** con responsable, plazo e indicador.
+Plantilla 2 (Anexo A.2): **mini-DAFO (2 puntos por cuadrante) + 3 estrategias (una por directriz) + 3 proyectos** con método, indicador, responsable y plazo.
 
 ### Cronograma del breakout
 | Min | Qué hace el grupo |
 |---|---|
-| 0–6 | **Mini-DAFO** en post-its: máximo 3 por cuadrante, pensando en su mandato |
-| 6–11 | **Cruzar cuadrantes** y redactar **3 estrategias** (empiezan con un verbo y salen de los cruces) |
-| 11–17 | Para cada estrategia, definir **1 proyecto**: título, método (DMAIC / SMED / TPM / Kaizen / 5S), indicador, responsable (rol), plazo |
-| 17–20 | **Filtro de priorización:** ¿cada proyecto empuja claramente a una directriz? ¿hay recursos para los 3? Si no, tachar uno |
+| 0–4 | **Mini-DAFO** en post-its: máximo 2 por cuadrante, pensando en su mandato |
+| 4–8 | **Cruzar cuadrantes** y redactar **3 estrategias** (verbo + qué; una por directriz) |
+| 8–13 | Para cada estrategia, **1 proyecto**: título, método (DMAIC / SMED / TPM / Kaizen / 5S), indicador, responsable (rol), plazo. **Pueden usar el banco de proyectos de abajo** |
+| 13–15 | **Filtro de priorización:** ¿cada proyecto empuja claramente a una directriz? ¿hay recursos para los 3? Si no, tachar uno |
 
 ### Criterios de éxito
 - ☐ Cada estrategia **cuelga de una directriz** del Breakout 1 (trazabilidad).
@@ -242,14 +260,14 @@ Cada portavoz presenta **su estrategia número 1 y su proyecto** en 45 s. El gru
 
 ---
 
-## 9. Mini-clase 4 (Diapositivas 23–28) · 10 min
+## 9. Mini-clase 4 (Diapositivas 23–28) · 15 min
 
-### Indicadores en cascada (diap. 23–24) · 3 min
+### Indicadores en cascada (diap. 23–24) · 4 min
 "Tres ritmos: **mensual** (Balanced Scorecard), **semanal** (Box Score), **diario** (tablero de piso). Y los indicadores se **encadenan** de la célula a la cadena de valor y a la compañía."
 
 **Ejemplo Tesla:** *Compañía:* defectos por coche en entrega → *Cadena de valor (Model Y):* defectos por coche al final de línea → *Célula (pintura):* % de carrocerías que requieren retrabajo por turno.
 
-### Box Score y semáforo (diap. 25) · 4 min
+### Box Score y semáforo (diap. 25) · 6 min
 - Revisión **semanal**: 52 oportunidades al año de decidir, frente a 12 si es mensual.
 - **Semáforo:** verde (de acuerdo al objetivo), amarillo (cerca, alerta), rojo (lejos, atención inmediata). **Cada rojo lleva acción, responsable y fecha.**
 
@@ -262,12 +280,18 @@ Cada portavoz presenta **su estrategia número 1 y su proyecto** en 45 s. El gru
 | Entrega: coches por día | ≥ 105 | 100 🟡 | 92 🔴 | 106 🟢 |
 | Coste: horas extra | ≤ 40 | 52 🟡 | 90 🔴 | 44 🟡 |
 
-### Tácticas y SCRUM (diap. 26–28) · 3 min
+- **Cómo se define el semáforo (para el breakout):** una regla escrita por color. Ej.: defectos por coche → verde ≤ 0,8; amarillo 0,8–1,0; rojo > 1,0.
+- **Pregunta (1 min):** "En la semana 2 todo está en rojo. ¿Qué hacéis el lunes?" → acción, responsable y fecha por cada rojo; si la causa no es obvia, proyecto DMAIC.
+
+### Tácticas y SCRUM (diap. 26–28) · 5 min
 "Las tácticas son los proyectos y actividades clave. Para asegurar su ejecución se usa una gestión ágil como **SCRUM** (se verá a fondo en Black Belt): sprints cortos de 2 semanas, reunión diaria breve, tablero *pendiente / en curso / hecho*." Y recuerda: **limita el WIP de proyectos** (máx. 2 por Black Belt, 3 por Green Belt).
+
+- **Ejemplo Tesla de tácticas (diap. 27):** estrategia *"reducir retrabajo en pintura"* → proyecto DMAIC *"reducir defectos de pintura al final de línea"* → actividades: recoger defectos 4 semanas, Pareto por tipo, estandarizar el ajuste.
+- **Instrucciones previas al Breakout 3 (1 min):** reparte plantillas A.3 y A.4; recuerda **15 minutos**: 7 para el Box Score, 2 para simular una semana, 4 para ensamblar y 2 para ensayar.
 
 ---
 
-## 10. 🎯 BREAKOUT 3 — Box Score y plan de una hoja · 20 min
+## 10. 🎯 BREAKOUT 3 — Box Score y plan de una hoja · 15 min
 
 ### Objetivo (una frase)
 **"Diseñar el Box Score semanal del grupo (5 indicadores con semáforo) y ensamblar el plan completo de una sola hoja, listo para presentar."**
@@ -279,10 +303,10 @@ Cada portavoz presenta **su estrategia número 1 y su proyecto** en 45 s. El gru
 ### Cronograma del breakout
 | Min | Qué hace el grupo |
 |---|---|
-| 0–8 | **Box Score:** elegir 1 indicador por categoría (SQDCP), objetivo y regla del semáforo; que **al menos 2 se conecten con el mandato del grupo** |
-| 8–10 | **Simular una semana:** el facilitador da (o el grupo inventa) un resultado y marcan los colores; para cada rojo, definir 1 acción |
-| 10–17 | **Ensamblar el plan de una hoja** copiando de las plantillas 1 y 2 (misión, directrices, estrategias, proyectos, indicadores) |
-| 17–20 | Ensayo de **presentación de 2 minutos**: ¿se entiende sin explicaciones? |
+| 0–7 | **Box Score:** elegir 1 indicador por categoría (SQDCP), objetivo y regla del semáforo; que **al menos 2 se conecten con el mandato del grupo** |
+| 7–9 | **Simular una semana:** el grupo inventa un resultado, marca los colores y define 1 acción para cada rojo |
+| 9–13 | **Ensamblar el plan de una hoja** copiando de las plantillas 1 y 2 (misión, directrices, estrategias, proyectos, indicadores) |
+| 13–15 | Ensayo de **presentación de 2 minutos**: ¿se entiende sin explicaciones? |
 
 ### Criterios de éxito
 - ☐ Los 5 indicadores son medibles **cada semana** (no mensuales).
@@ -314,14 +338,15 @@ Cada portavoz presenta su plan de una hoja. **Los otros dos grupos anotan una pr
 
 ## Anexo A – Plantillas para participantes
 
-### A.1 Breakout 1 – Filosofía, directrices y objetivos
+### A.1 Breakout 1 – Directrices y objetivos (10 min)
 ```
 GRUPO: ______   MANDATO: ______________________
 
-MISIÓN de la planta (1 frase):
-________________________________________________
+MISIÓN de la planta (dada): "Fabricar en Berlín coches seguros y de calidad,
+a un coste que haga la movilidad eléctrica accesible."
 
-VALORES (4): 1.________ 2.________ 3.________ 4.________
+DATOS DE PARTIDA (supuestos): coste/coche 100 · defectos/coche 1,0 ·
+coches/día 100 · incidentes con baja 10 · rotación anual 20 %
 
 ┌───────────────┬────────────────────┬────────────┬──────┬─────────┐
 │ Perspectiva   │ DIRECTRIZ (QUÉ)    │ Indicador  │ Hoy  │ Meta 12m│
@@ -331,12 +356,12 @@ VALORES (4): 1.________ 2.________ 3.________ 4.________
 │ Procesos      │                    │            │      │         │
 │ Personas      │                    │            │      │         │
 └───────────────┴────────────────────┴────────────┴──────┴─────────┘
-(Elegid 3 de las 4 filas. Los "Hoy" son supuestos.)
+(Elegid 3 de las 4 filas. Usad los datos de partida.)
 ```
 
-### A.2 Breakout 2 – Estrategias y proyectos
+### A.2 Breakout 2 – Estrategias y proyectos (15 min)
 ```
-MINI-DAFO (máx. 3 por casilla)
+MINI-DAFO (máx. 2 por casilla)
 Fortalezas:            Debilidades:
 Oportunidades:         Amenazas:
 
@@ -352,7 +377,7 @@ FO/DO/FA/DA: ______________________________
 └───────────┴────────────┴─────────┴──────────┴─────────┴────────┴───────┘
 ```
 
-### A.3 Breakout 3 – Box Score semanal
+### A.3 Breakout 3 – Box Score semanal (15 min)
 ```
 ┌───────────────┬────────────┬──────────┬──────────┬─────────┬────────┐
 │ Categoría     │ Indicador  │ Objetivo │ Verde    │ Amarillo│ Rojo   │
@@ -409,5 +434,5 @@ Ritmo de revisión: diario (5') · semanal (30') · mensual (1 h) · anual
 
 | Si tienes… | Ajuste |
 |---|---|
-| 2 h | Breakouts de 15 min (BO1 15, BO2 15, BO3 15); mini-clases de 8 min; plenarios de 3 min; elimina la pausa |
-| 3 h | Breakouts de 25 min; añade 5 min de ronda de catchball cruzado en cada plenario |
+| 2 h | Breakouts de 8 / 12 / 12 min; mini-clases de 12 / 10 / 10 / 12 min; plenarios de 3 min; pausa de 5 min |
+| 3 h | Breakouts de 15 / 20 / 20 min; añade 5 min de ronda de catchball cruzado en cada plenario |
